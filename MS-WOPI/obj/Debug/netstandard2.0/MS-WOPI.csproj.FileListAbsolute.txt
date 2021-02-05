@@ -16,3 +16,12 @@ C:\Users\Saurabh.Singh\source\repos\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.Ass
 C:\Users\Saurabh.Singh\source\repos\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.csproj.CoreCompileInputs.cache
 C:\Users\Saurabh.Singh\source\repos\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.dll
 C:\Users\Saurabh.Singh\source\repos\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.pdb
+C:\Users\Saurabh.Singh\Desktop\WOPIHost\MS-WOPI\bin\Debug\netstandard2.0\MS-WOPI.deps.json
+C:\Users\Saurabh.Singh\Desktop\WOPIHost\MS-WOPI\bin\Debug\netstandard2.0\MS-WOPI.dll
+C:\Users\Saurabh.Singh\Desktop\WOPIHost\MS-WOPI\bin\Debug\netstandard2.0\MS-WOPI.pdb
+C:\Users\Saurabh.Singh\Desktop\WOPIHost\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.csprojAssemblyReference.cache
+C:\Users\Saurabh.Singh\Desktop\WOPIHost\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.AssemblyInfoInputs.cache
+C:\Users\Saurabh.Singh\Desktop\WOPIHost\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.AssemblyInfo.cs
+C:\Users\Saurabh.Singh\Desktop\WOPIHost\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.csproj.CoreCompileInputs.cache
+C:\Users\Saurabh.Singh\Desktop\WOPIHost\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.dll
+C:\Users\Saurabh.Singh\Desktop\WOPIHost\MS-WOPI\obj\Debug\netstandard2.0\MS-WOPI.pdb

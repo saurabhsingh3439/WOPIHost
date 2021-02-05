@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "N5Xx2qoGu33M08T6lVUm5lThrEjEPb3Ge0SnJOG/wqLbcqrmWJl0kFLPAQd7gG7iw+/tN/tvNmVISDAwGR+mFA==",
+  "dgSpecHash": "PisBYZe0+WlZ379Xi97wVaQ0dvqauppU+hvaDJA58AdjLvXMJ6F874BDmQIX34jbWSStAIcPjdiyfWgGpvS33Q==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Saurabh.Singh\\source\\repos\\MS-WOPI\\MS-WOPI.csproj",
+  "projectFilePath": "C:\\Users\\Saurabh.Singh\\Desktop\\WOPIHost\\MS-WOPI\\MS-WOPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Saurabh.Singh\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"

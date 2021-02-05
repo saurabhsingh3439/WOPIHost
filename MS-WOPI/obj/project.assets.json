@@ -185,11 +185,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Saurabh.Singh\\source\\repos\\MS-WOPI\\MS-WOPI.csproj",
+      "projectUniqueName": "C:\\Users\\Saurabh.Singh\\Desktop\\WOPIHost\\MS-WOPI\\MS-WOPI.csproj",
       "projectName": "MS-WOPI",
-      "projectPath": "C:\\Users\\Saurabh.Singh\\source\\repos\\MS-WOPI\\MS-WOPI.csproj",
+      "projectPath": "C:\\Users\\Saurabh.Singh\\Desktop\\WOPIHost\\MS-WOPI\\MS-WOPI.csproj",
       "packagesPath": "C:\\Users\\Saurabh.Singh\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Saurabh.Singh\\source\\repos\\MS-WOPI\\obj\\",
+      "outputPath": "C:\\Users\\Saurabh.Singh\\Desktop\\WOPIHost\\MS-WOPI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
