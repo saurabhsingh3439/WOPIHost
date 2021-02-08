@@ -7,6 +7,7 @@ using MS_WOPI.Common;
 using MS_WOPI.Response;
 using System.Net;
 using MS_WOPI.ProcessWopi;
+using System.IO;
 
 namespace MS_WOPI.Handlers
 {
@@ -33,15 +34,12 @@ namespace MS_WOPI.Handlers
 
         private static readonly Dictionary<string, LockInfo> Locks = new Dictionary<string, LockInfo>();
 
-        #region IHttpHandler Members
+        
 
-        /// <summary>
-        /// Begins processing the incoming WOPI request.
-        /// </summary>
+        
         public void ProcessRequest(IAsyncResult result)
         {
-            // WOPI ProofKey validation is an optional way that a WOPI host can ensure that the request
-            // is coming from the Office server that they expect to be talking to.
+            
             HttpListener listener = (HttpListener)result.AsyncState;
             HttpListenerContext context = listener.EndGetContext(result);
             if (!_authorization.ValidateWopiProofKey(context.Request))
@@ -49,10 +47,10 @@ namespace MS_WOPI.Handlers
                _errHandler.ReturnServerError(context.Response);
             }
             _processor = new WopiProcessor(_authorization, _errHandler, context.Response);
-            // Parse the incoming WOPI request
+            
             WopiRequest requestData = ParseRequest(context.Request);
 
-            // Call the appropriate handler for the WOPI request we received
+            
             switch (requestData.Type)
             {
                 case RequestType.CheckFileInfo:
@@ -101,12 +99,13 @@ namespace MS_WOPI.Handlers
 
         private static WopiRequest ParseRequest(HttpListenerRequest request)
         {
-            // Initilize wopi request data object with default values
             WopiRequest requestData = new WopiRequest()
             {
                 Type = RequestType.None,
                 AccessToken = request.QueryString["access_token"],
-                Id = ""
+                Id = "",
+                LockId = request.Headers[WopiHeaders.Lock],
+                OldLockId = request.Headers[WopiHeaders.OldLock]
             };
 
             string requestPath = request.Url.AbsolutePath;
@@ -119,9 +118,7 @@ namespace MS_WOPI.Handlers
 
                 if (rawId.EndsWith(ContentsRequestPath))
                 {
-                    // The rawId ends with /contents so this is a request to read/write the file contents
 
-                    // Remove /contents from the end of rawId to get the actual file id
                     requestData.Id = rawId.Substring(0, rawId.Length - ContentsRequestPath.Length);
 
                     if (request.HttpMethod == "GET")
@@ -129,7 +126,6 @@ namespace MS_WOPI.Handlers
                     if (request.HttpMethod == "POST")
                     {
                         requestData.Type = RequestType.PutFile;
-                        request.InputStream.CopyTo(requestData.FileData);
                     }
                 }
                 else
@@ -138,13 +134,11 @@ namespace MS_WOPI.Handlers
 
                     if (request.HttpMethod == "GET")
                     {
-                        // a GET to the file is always a CheckFileInfo request
                         requestData.Type = RequestType.CheckFileInfo;
                     }
                     else if (request.HttpMethod == "POST")
                     {
-                        request.InputStream.CopyTo(requestData.FileData);
-                        // For a POST to the file we need to use the X-WOPI-Override header to determine the request type
+                        
                         string wopiOverride = request.Headers[WopiHeaders.RequestType];
 
                         switch (wopiOverride)
@@ -153,8 +147,6 @@ namespace MS_WOPI.Handlers
                                 requestData.Type = RequestType.PutRelativeFile;
                                 break;
                             case "LOCK":
-                                // A lock could be either a lock or an unlock and relock, determined based on whether
-                                // the request sends an OldLock header.
                                 if (request.Headers[WopiHeaders.OldLock] != null)
                                     requestData.Type = RequestType.UnlockAndRelock;
                                 else
@@ -187,35 +179,25 @@ namespace MS_WOPI.Handlers
             }
             else if (wopiPath.StartsWith(FoldersRequestPath))
             {
-                // A folder-related request.
-
-                // remove /folders/ from the beginning of wopiPath
                 string rawId = wopiPath.Substring(FoldersRequestPath.Length);
 
                 if (rawId.EndsWith(ChildrenRequestPath))
                 {
-                    // rawId ends with /children, so it's an EnumerateChildren request.
-
-                    // remove /children from the end of rawId
                     requestData.Id = rawId.Substring(0, rawId.Length - ChildrenRequestPath.Length);
                     requestData.Type = RequestType.EnumerateChildren;
                 }
                 else
                 {
-                    // rawId doesn't end with /children, so it's a CheckFolderInfo.
-
                     requestData.Id = rawId;
                     requestData.Type = RequestType.CheckFolderInfo;
                 }
             }
             else
             {
-                // An unknown request.
                 requestData.Type = RequestType.None;
             }
             return requestData;
         }
 
-        #endregion
     }
 }

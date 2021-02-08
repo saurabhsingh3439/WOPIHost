@@ -13,7 +13,6 @@ namespace MS_WOPI.Common
         public static readonly Dictionary<string, LockInfo> Locks = new Dictionary<string, LockInfo>();
         public static bool TryGetLock(string fileId, out LockInfo lockInfo)
         {
-            // TODO: This lock implementation is not thread safe and not persisted and all in all just an example.
             if (Locks.TryGetValue(fileId, out lockInfo))
             {
                 if (lockInfo.Expired)

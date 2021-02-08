@@ -6,10 +6,6 @@ namespace MS_WOPI.Response
 {
     class CheckFileInfoResponse
     {
-        // This is a subset of all CheckFileInfo properties.
-        // Use optional properties in accordance with the [MS-WOPI] Web Application Open Platform Interface Protocol specification.
-
-        // Required response properties
         public string BaseFileName { get; set; }
         public string OwnerId { get; set; }
         public int Size { get; set; }
