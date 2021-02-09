@@ -59,9 +59,22 @@ namespace MS_WOPI.Request
             get { return Path.Combine(WopiHandler.LocalStoragePath, Id); }
         }
 
-        public MemoryStream FileData
+        public byte[] FileData { get; set; }
+
+        public string lockID { get; set; }
+
+        public static byte[] StreamtoBytes(Stream input, long length)
         {
-            get { return new MemoryStream(); }
+            byte[] buffer = new byte[length];
+            using (MemoryStream ms = new MemoryStream())
+            {
+                int read;
+                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    ms.Write(buffer, 0, read);
+                }
+                return ms.ToArray();
+            }
         }
     }
 }

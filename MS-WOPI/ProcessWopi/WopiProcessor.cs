@@ -25,11 +25,11 @@ namespace MS_WOPI.ProcessWopi
         }
         public void HandleCheckFileInfoRequest(WopiRequest requestData)
         {
-            if (_authorization.ValidateAccess(requestData, writeAccessRequired: false))
-            {
-                _errorHandler.ReturnInvalidToken(_response);
-                return;
-            }
+           // if (_authorization.ValidateAccess(requestData, writeAccessRequired: false))
+           // {
+             //   _errorHandler.ReturnInvalidToken(_response);
+             //   return;
+            //}
 
             if (!File.Exists(requestData.FullPath))
             {
@@ -51,14 +51,17 @@ namespace MS_WOPI.ProcessWopi
                 var json = new DataContractJsonSerializer(typeof(WopiCheckFileInfo));
                 json.WriteObject(memoryStream, generator.GetFileInfoResponse());
                 memoryStream.Flush();
-                memoryStream.Position = 0;
                 StreamReader streamReader = new StreamReader(memoryStream);
                 var jsonResponse = Encoding.UTF8.GetBytes(streamReader.ReadToEnd());
 
                 _response.ContentType = @"application/json";
                 _response.ContentLength64 = jsonResponse.Length;
                 _response.OutputStream.Write(jsonResponse, 0, jsonResponse.Length);
+                StreamReader reader = new StreamReader(_response.OutputStream);
+                string text = reader.ReadToEnd();
+                Console.WriteLine(text);
                 _response.Close();
+                
                 _errorHandler.ReturnSuccess(_response);
             }
             catch (UnauthorizedAccessException)
@@ -79,12 +82,14 @@ namespace MS_WOPI.ProcessWopi
             if (!_authorization.ValidateAccess(requestData, writeAccessRequired: false))
             {
                 _errorHandler.ReturnInvalidToken(_response);
+                _response.Close();
                 return;
             }
 
             if (!File.Exists(requestData.FullPath))
             {
                 _errorHandler.ReturnFileUnknown(_response);
+                _response.Close();
                 return;
             }
 
@@ -93,12 +98,12 @@ namespace MS_WOPI.ProcessWopi
                 FileInfo fileInfo = new FileInfo(requestData.FullPath);
                 ResponseGenerator generator = new ResponseGenerator(fileInfo);
                 var content = generator.GetFileContent();
-                _response.ContentType = @"application/octet-stream";
+                _response.ContentType = @"application/vnd.ms-excel";
                 _response.ContentLength64 = content.Length;
                 _response.OutputStream.Write(content, 0, content.Length);
-
-                _response.Close();
+                _response.OutputStream.Flush();
                 _errorHandler.ReturnSuccess(_response);
+          
             }
             catch (UnauthorizedAccessException)
             {
@@ -108,6 +113,7 @@ namespace MS_WOPI.ProcessWopi
             {
                 _errorHandler.ReturnFileUnknown(_response);
             }
+            _response.Close();
         }
 
         public static string GetFileVersion(string filename)
@@ -125,6 +131,7 @@ namespace MS_WOPI.ProcessWopi
         /// </remarks>
         public void HandlePutFileRequest(WopiRequest requestData)
         {
+
             if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
             {
                 _errorHandler.ReturnInvalidToken(_response);
@@ -136,7 +143,7 @@ namespace MS_WOPI.ProcessWopi
                 _errorHandler.ReturnFileUnknown(_response);
                 return;
             }
-            string newLock = requestData.AccessToken;
+            string newLock = requestData.lockID;
             LockInfo existingLock;
             bool hasExistingLock;
 
@@ -148,7 +155,7 @@ namespace MS_WOPI.ProcessWopi
             if (hasExistingLock && existingLock.Lock != newLock)
             {
                 // lock mismatch/locked by another interface
-                _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
+                _errorHandler.ReturnLockMismatch(_response, existingLock.Lock, "Lock Mismatch");
                 return;
             }
 
@@ -161,6 +168,7 @@ namespace MS_WOPI.ProcessWopi
                 // With no lock and a non-zero file, a PutFile could potentially result in data loss by clobbering
                 // existing content.  Therefore, return a lock mismatch error.
                 _errorHandler.ReturnLockMismatch(_response, reason: "PutFile on unlocked file with current size != 0");
+                return;
             }
 
             // Either the file has a valid lock that matches the lock in the request, or the file is unlocked
@@ -168,7 +176,7 @@ namespace MS_WOPI.ProcessWopi
             try
             {
                 ResponseGenerator generator = new ResponseGenerator(putTargetFileInfo);
-                generator.Save(requestData.FileData.ToArray());
+                generator.SaveusingBytes(requestData);
                 _response.ContentLength64 = 0;
                 _response.ContentType = @"text/html";
                 _response.StatusCode = (int)HttpStatusCode.OK;
@@ -204,7 +212,7 @@ namespace MS_WOPI.ProcessWopi
                 return;
             }
 
-            string newLock = requestData.AccessToken;
+            string newLock = requestData.lockID;
 
             lock (LockInfo.Locks)
             {
@@ -218,6 +226,7 @@ namespace MS_WOPI.ProcessWopi
                     // information about a current session in the lock value and expects to conflict when there's
                     // an existing session to join.
                     _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
+                    return;
                 }
                 else
                 {
@@ -234,6 +243,7 @@ namespace MS_WOPI.ProcessWopi
 
                     // Return success
                     _errorHandler.ReturnSuccess(_response);
+                    return;
                 }
             }
         }

@@ -7,6 +7,7 @@ using MS_WOPI.Common;
 using MS_WOPI.Response;
 using System.Net;
 using MS_WOPI.ProcessWopi;
+using System.IO;
 
 namespace MS_WOPI.Handlers
 {
@@ -17,7 +18,7 @@ namespace MS_WOPI.Handlers
         private const string FoldersRequestPath = @"folders/";
         private const string ContentsRequestPath = @"/contents";
         private const string ChildrenRequestPath = @"/children";
-        public static string LocalStoragePath = @"c:\WopiStorage\";
+        public static string LocalStoragePath = @"D:\wopiDocs\";
 
         private IErrorHandler _errHandler;
         private IAuthorization _authorization;
@@ -50,7 +51,17 @@ namespace MS_WOPI.Handlers
             }
             _processor = new WopiProcessor(_authorization, _errHandler, context.Response);
             // Parse the incoming WOPI request
+                
             WopiRequest requestData = ParseRequest(context.Request);
+
+            //For testing purposes
+            //WopiRequest requestData = new WopiRequest();
+            //requestData.Type = RequestType.GetFile;
+            //requestData.Id = requestData.Id + ".doc";
+            requestData.lockID = "aj1234";
+            
+
+            //requestData.FileData = File.ReadAllBytes(@"D:\wopiDocs\test.doc");
 
             // Call the appropriate handler for the WOPI request we received
             switch (requestData.Type)
@@ -129,7 +140,11 @@ namespace MS_WOPI.Handlers
                     if (request.HttpMethod == "POST")
                     {
                         requestData.Type = RequestType.PutFile;
-                        request.InputStream.CopyTo(requestData.FileData);
+
+                        requestData.FileData = WopiRequest.StreamtoBytes(request.InputStream, request.InputStream.Length);
+
+                        //getting lockID from request header
+                        requestData.lockID = request.Headers[WopiHeaders.Lock];
                     }
                 }
                 else
@@ -143,7 +158,7 @@ namespace MS_WOPI.Handlers
                     }
                     else if (request.HttpMethod == "POST")
                     {
-                        request.InputStream.CopyTo(requestData.FileData);
+                        requestData.FileData = WopiRequest.StreamtoBytes(request.InputStream, request.InputStream.Length);
                         // For a POST to the file we need to use the X-WOPI-Override header to determine the request type
                         string wopiOverride = request.Headers[WopiHeaders.RequestType];
 

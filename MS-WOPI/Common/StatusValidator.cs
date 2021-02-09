@@ -4,6 +4,7 @@ using System.Text;
 using MS_WOPI.Response;
 using MS_WOPI.Interfaces;
 using System.Net;
+using System.IO;
 
 namespace MS_WOPI.Common
 {
