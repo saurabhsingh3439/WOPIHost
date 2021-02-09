@@ -61,20 +61,9 @@ namespace MS_WOPI.Request
 
         public byte[] FileData { get; set; }
 
-        public string lockID { get; set; }
+        public string LockId { get; set; }
+        public string OldLockId { get; set; }
 
-        public static byte[] StreamtoBytes(Stream input, long length)
-        {
-            byte[] buffer = new byte[length];
-            using (MemoryStream ms = new MemoryStream())
-            {
-                int read;
-                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    ms.Write(buffer, 0, read);
-                }
-                return ms.ToArray();
-            }
         }
     }
 }

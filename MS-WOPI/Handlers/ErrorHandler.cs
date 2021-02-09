@@ -38,6 +38,8 @@ namespace MS_WOPI.Handlers
             if (!String.IsNullOrEmpty(reason))
             {
                 response.Headers[WopiHeaders.LockFailureReason] = reason;
+                _statusValidator.ReturnStatus(response, 409, reason);
+                return;
             }
 
             _statusValidator.ReturnStatus(response, 409, "Lock mismatch/Locked by another interface");

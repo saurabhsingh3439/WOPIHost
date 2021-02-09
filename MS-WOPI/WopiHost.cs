@@ -32,13 +32,11 @@ namespace MS_WOPI
             _handler = new WopiHandler(m_docsPath);
             // localhost may change to the real hostname or IP
             m_listener.Prefixes.Add(String.Format("http://localhost:{0}/wopi/", m_port));
-        //http://localhost:8080/wopi/files/test/contents
             m_listener.Start();
-
-            for(int i=0;i<50;i++)
-                {
-            var res = m_listener.BeginGetContext(new AsyncCallback(_handler.ProcessRequest), m_listener);
-                }
+            for (int i = 0; i < 50; i++)
+            {
+                m_listener.BeginGetContext(new AsyncCallback(_handler.ProcessRequest), m_listener);
+            }
             Console.WriteLine(@"WopiServer Started");
         }
 
