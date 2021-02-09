@@ -59,18 +59,6 @@ namespace MS_WOPI.Response.ResponseGenerator
             return ms.ToArray();
         }
 
-        public MemoryStream GetFileContentasStream()
-        {
-            MemoryStream ms = new MemoryStream();
-            lock (_info)
-            {
-                using (FileStream fileStream = _info.OpenRead())
-                {
-                    fileStream.CopyTo(ms);
-                }
-            }
-            return ms;
-        }
         public void Save(byte[] new_content)
         {
             lock (_info)
@@ -79,14 +67,6 @@ namespace MS_WOPI.Response.ResponseGenerator
                 {
                     fileStream.Write(new_content, 0, new_content.Length);
                 }
-            }
-        }
-
-        public void SaveusingBytes(WopiRequest requestData)
-        {
-            lock (_info)
-            {
-                File.WriteAllBytes(requestData.FullPath, requestData.FileData);
             }
         }
     }
