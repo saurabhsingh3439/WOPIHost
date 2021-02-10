@@ -8,6 +8,7 @@ using MS_WOPI.Response;
 using System.Net;
 using MS_WOPI.ProcessWopi;
 using System.IO;
+using System.Threading;
 
 namespace MS_WOPI.Handlers
 {
@@ -23,10 +24,11 @@ namespace MS_WOPI.Handlers
         private IErrorHandler _errHandler;
         private IAuthorization _authorization;
         private IWopiProcessor _processor;
+        private WopiUserRequest _userRequest;
 
-        public WopiHandler(string storagePath)
+        public WopiHandler(WopiUserRequest wopiUser)
         {
-            //LocalStoragePath = storagePath;
+            _userRequest = wopiUser;
             _errHandler = new ErrorHandler();
             _authorization = new Authorization();
         }
@@ -38,7 +40,12 @@ namespace MS_WOPI.Handlers
         
         public void ProcessRequest(IAsyncResult result)
         {
-            
+            Thread process_thread = new Thread(() => ProcessRequestPrivate(result));
+            process_thread.Start();
+        }
+        
+        public void ProcessRequestPrivate(IAsyncResult result)
+        {
             HttpListener listener = (HttpListener)result.AsyncState;
             HttpListenerContext context = listener.EndGetContext(result);
             if (!_authorization.ValidateWopiProofKey(context.Request))

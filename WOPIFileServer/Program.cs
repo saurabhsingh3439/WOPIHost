@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MS_WOPI;
+using MS_WOPI.Request;
 
 namespace WOPIFileServer
 {
@@ -11,7 +12,14 @@ namespace WOPIFileServer
     {
         static void Main(string[] args)
         {
-            WopiHost host = new WopiHost(@"C:\\wopi-docs");
+            WopiUserRequest request = new WopiUserRequest()
+            {
+                userId = "user@policyhub",
+                resourceId = "file1.txt",
+                Action = ActionType.VIEW,
+                docsPath = @"C:\\wopi-docs"
+            };
+            WopiHost host = new WopiHost(request);
             host.Start();
             Console.WriteLine("A simple wopi webserver. Press any key to quit.");
             Console.ReadKey();

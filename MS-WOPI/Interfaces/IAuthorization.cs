@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Net;
 using MS_WOPI.Request;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MS_WOPI.Interfaces
 {
@@ -10,5 +12,8 @@ namespace MS_WOPI.Interfaces
     {
         bool ValidateWopiProofKey(HttpListenerRequest request);
         bool ValidateAccess(WopiRequest requestData, bool writeAccessRequired);
+        SecurityToken GenerateAccessToken(string UserID, string DocID);
+        string GetWopiUrl(string wopiSource, string accessToken = null);
+        bool ValidateToken(string tokenString, string userId, string docId);
     }
 }
