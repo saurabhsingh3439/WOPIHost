@@ -9,6 +9,7 @@ using MS_WOPI.Common;
 using System.Net;
 using MS_WOPI.Response.ResponseGenerator;
 using System.Runtime.Serialization.Json;
+using MS_WOPI.Handlers;
 
 namespace MS_WOPI.ProcessWopi
 {
@@ -418,154 +419,158 @@ namespace MS_WOPI.ProcessWopi
 
         public void HandlePutRelativeFileRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            lock (this)
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
-
-            }
-
-            if (!File.Exists(requestData.FullPath))
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                _response.Close();
-                return;
-            }
-
-            if (requestData.RelativeTarget != null && requestData.SuggestedTarget != null)
-            {
-                // Theses headers are mutually exclusive, so we should return a 501 Not Implemented
-                _errorHandler.ReturnBadRequest(_response);
-                _response.Close();
-                return;
-            }
-
-            else if (requestData.RelativeTarget == null && requestData.SuggestedTarget == null)
-            {
-                _errorHandler.ReturnBadRequest(_response);
-                _response.Close();
-                return;
-            }
-
-            else if (requestData.RelativeTarget != null || requestData.SuggestedTarget != null)
-            {
-                string fileName = "";
-                string filePath = "";
-                if (requestData.RelativeTarget != null)
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
-                    // Specific mode...use the exact filename
-                    fileName = requestData.RelativeTarget;
-                    bool IsinvalidName = (string.IsNullOrEmpty(fileName) || fileName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0);
-                    if (IsinvalidName || fileName.IndexOf('.') == 0)
-                    {
-                        _errorHandler.ReturnBadRequest(_response);
-                        _response.Close();
-                        return;
-                    }
+                    _errorHandler.ReturnInvalidToken(_response);
+                    _response.Close();
+                    return;
+                }
 
-                    filePath = Path.Combine(WopiHandler.LocalStoragePath, fileName);
+                if (!File.Exists(requestData.FullPath))
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                    _response.Close();
+                    return;
+                }
 
-                    //if file already exist
-                    if (File.Exists(filePath))
+                if (requestData.RelativeTarget != null && requestData.SuggestedTarget != null)
+                {
+                    // Theses headers are mutually exclusive, so we should return a 501 Not Implemented
+                    _errorHandler.ReturnBadRequest(_response);
+                    _response.Close();
+                    return;
+                }
+
+                else if (requestData.RelativeTarget == null && requestData.SuggestedTarget == null)
+                {
+                    _errorHandler.ReturnBadRequest(_response);
+                    _response.Close();
+                    return;
+                }
+
+                else if (requestData.RelativeTarget != null || requestData.SuggestedTarget != null)
+                {
+                    string fileName = "";
+                    string filePath = "";
+                    if (requestData.RelativeTarget != null)
                     {
-                        if (!requestData.OverwriteTarget)
+                        // Specific mode...use the exact filename
+                        fileName = requestData.RelativeTarget;
+                        bool IsinvalidName = (string.IsNullOrEmpty(fileName) || fileName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0);
+                        if (IsinvalidName || fileName.IndexOf('.') == 0)
                         {
-                            while (File.Exists(filePath))
-                            {
-                                int i = 1;
-                                var filenamewithoutext = Path.GetFileNameWithoutExtension(fileName);
-                                fileName = filenamewithoutext + "_" + i.ToString() + Path.GetExtension(filePath);
-                                filePath = Path.Combine(WopiHandler.LocalStoragePath, fileName);
-                                i = i + 1;
-                            }
-                            _response.AddHeader(WopiHeaders.ValidRelativeTarget, fileName);
-                            _errorHandler.ReturnConflict(_response);
+                            _errorHandler.ReturnBadRequest(_response);
                             _response.Close();
                             return;
                         }
-                        else
-                        {
-                            LockInfo existingLock;
-                            bool hasExistingLock;
 
-                            lock (LockInfo.Locks)
+                        filePath = Path.Combine(WopiHandler.LocalStoragePath, fileName);
+
+                        //if file already exist
+                        if (File.Exists(filePath))
+                        {
+                            if (!requestData.OverwriteTarget)
                             {
-                                hasExistingLock = LockInfo.TryGetLock(requestData.Id, out existingLock);
-                            }
-                            if (hasExistingLock)
-                            {
-                                _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                                while (File.Exists(filePath))
+                                {
+                                    int i = 1;
+                                    var filenamewithoutext = Path.GetFileNameWithoutExtension(fileName);
+                                    fileName = filenamewithoutext + "_" + i.ToString() + Path.GetExtension(filePath);
+                                    filePath = Path.Combine(WopiHandler.LocalStoragePath, fileName);
+                                    i = i + 1;
+                                }
+                                _response.AddHeader(WopiHeaders.ValidRelativeTarget, fileName);
                                 _errorHandler.ReturnConflict(_response);
                                 _response.Close();
                                 return;
                             }
-                        }
-
-                    }
-                }
-                else
-                {
-                    // Suggested mode...might just be an extension
-
-                    fileName = requestData.SuggestedTarget;
-
-                    if (fileName.IndexOf('.') == 0)
-                        fileName = Path.GetFileNameWithoutExtension(requestData.Id) + fileName;
-
-                    fileName = MakeValidFileName(fileName);
-                    filePath = Path.Combine(WopiHandler.LocalStoragePath, fileName);
-
-                    //if file already exist
-                    if (File.Exists(filePath))
-                    {
-                        int i = 0;
-                        while (File.Exists(filePath))
-                        {
-                            i = i + 1;
-                            var filenamewithoutext = Path.GetFileNameWithoutExtension(fileName);
-                            if (!filenamewithoutext.EndsWith(i.ToString()))
+                            else
                             {
-                                if (filenamewithoutext.Substring(filenamewithoutext.Length - 1) == (i - 1).ToString())
-                                    filenamewithoutext = filenamewithoutext.Substring(0, filenamewithoutext.Length - 1);
+                                LockInfo existingLock;
+                                bool hasExistingLock;
 
-                                fileName = filenamewithoutext + i.ToString() + Path.GetExtension(filePath);
+                                lock (LockInfo.Locks)
+                                {
+                                    hasExistingLock = LockInfo.TryGetLock(requestData.Id, out existingLock);
+                                }
+                                if (hasExistingLock)
+                                {
+                                    _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                                    _errorHandler.ReturnConflict(_response);
+                                    _response.Close();
+                                    return;
+                                }
                             }
 
-
-                            filePath = WopiHandler.LocalStoragePath + fileName;
                         }
                     }
-                }
-
-                try
-                {
-                    File.WriteAllBytes(filePath, requestData.FileData);
-                    _response.ContentType = @"application / json";
-                    string fileurl = String.Format(@"http://localhost:8080/wopi/files/{0}?access_token={1}", fileName, requestData.AccessToken);
-                    PutRelativeFileResponse putRelative = new PutRelativeFileResponse
+                    else
                     {
-                        Name = fileName,
-                        Url = fileurl
-                    };
-                    DataContractJsonSerializer js = new DataContractJsonSerializer(typeof(PutRelativeFileResponse));
-                    MemoryStream msObj = new MemoryStream();
-                    js.WriteObject(msObj, putRelative);
-                    msObj.Position = 0;
-                    StreamReader sr = new StreamReader(msObj);
-                    string json = sr.ReadToEnd();
-                    var jsonResponse = Encoding.ASCII.GetBytes(json);
-                    _response.ContentLength64 = jsonResponse.Length;
-                    _response.OutputStream.Write(jsonResponse, 0, jsonResponse.Length);
-                    _response.StatusCode = (int)HttpStatusCode.OK;
+                        // Suggested mode...might just be an extension
 
-                }
-                catch (IOException)
-                {
-                    _errorHandler.ReturnServerError(_response);
+                        fileName = requestData.SuggestedTarget;
 
+                        if (fileName.IndexOf('.') == 0)
+                            fileName = Path.GetFileNameWithoutExtension(requestData.Id) + fileName;
+
+                        fileName = MakeValidFileName(fileName);
+                        filePath = Path.Combine(WopiHandler.LocalStoragePath, fileName);
+
+                        //if file already exist
+                        if (File.Exists(filePath))
+                        {
+                            int i = 0;
+                            while (File.Exists(filePath))
+                            {
+                                i = i + 1;
+                                var filenamewithoutext = Path.GetFileNameWithoutExtension(fileName);
+                                if (!filenamewithoutext.EndsWith(i.ToString()))
+                                {
+                                    if (filenamewithoutext.Substring(filenamewithoutext.Length - 1) == (i - 1).ToString())
+                                        filenamewithoutext = filenamewithoutext.Substring(0, filenamewithoutext.Length - 1);
+
+                                    fileName = filenamewithoutext + i.ToString() + Path.GetExtension(filePath);
+                                }
+
+
+                                filePath = WopiHandler.LocalStoragePath + fileName;
+                            }
+                        }
+                    }
+
+                    try
+                    {
+                        File.WriteAllBytes(filePath, requestData.FileData);
+                        _response.ContentType = @"application / json";
+                        string fileurl = String.Format(@"http://localhost:8080/wopi/files/{0}?access_token={1}", fileName, requestData.AccessToken);
+                        PutRelativeFileResponse putRelative = new PutRelativeFileResponse
+                        {
+                            Name = fileName,
+                            Url = fileurl
+                        };
+                        DataContractJsonSerializer js = new DataContractJsonSerializer(typeof(PutRelativeFileResponse));
+                        MemoryStream msObj = new MemoryStream();
+                        js.WriteObject(msObj, putRelative);
+                        msObj.Position = 0;
+                        StreamReader sr = new StreamReader(msObj);
+                        string json = sr.ReadToEnd();
+                        var jsonResponse = Encoding.ASCII.GetBytes(json);
+                        _response.ContentLength64 = jsonResponse.Length;
+                        _response.OutputStream.Write(jsonResponse, 0, jsonResponse.Length);
+                        _response.StatusCode = (int)HttpStatusCode.OK;
+
+                    }
+                    catch (IOException)
+                    {
+                        _errorHandler.ReturnServerError(_response);
+
+                    }
+                    _response.Close();
                 }
-                _response.Close();
+
             }
         }
 
