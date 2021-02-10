@@ -25,11 +25,12 @@ namespace MS_WOPI.ProcessWopi
         }
         public void HandleCheckFileInfoRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: false))
+            // userId(user@polihub) will be passed from the policyHub application
+            if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
+               _errorHandler.ReturnInvalidToken(_response);
+               _response.Close();
+               return;
             }
 
             if (!File.Exists(requestData.FullPath))
@@ -73,11 +74,12 @@ namespace MS_WOPI.ProcessWopi
 
         public void HandleGetFileRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: false))
+            // userId(user@polihub) will be passed from the policyHub application
+            if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
+               _errorHandler.ReturnInvalidToken(_response);
+               _response.Close();
+               return;
             }
 
             if (!File.Exists(requestData.FullPath))
@@ -120,11 +122,12 @@ namespace MS_WOPI.ProcessWopi
         
         public void HandlePutFileRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            // userId(user@polihub) will be passed from the policyHub application
+            if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
+               _errorHandler.ReturnInvalidToken(_response);
+               _response.Close();
+               return;
             }
 
             if (!File.Exists(requestData.FullPath))
@@ -193,11 +196,12 @@ namespace MS_WOPI.ProcessWopi
         
         public void HandleLockRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            // userId(user@polihub) will be passed from the policyHub application
+            if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
+               _errorHandler.ReturnInvalidToken(_response);
+               _response.Close();
+               return;
             }
 
             if (!File.Exists(requestData.FullPath))
@@ -240,11 +244,12 @@ namespace MS_WOPI.ProcessWopi
         
         public void HandleRefreshLockRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            // userId(user@polihub) will be passed from the policyHub application
+            if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
+               _errorHandler.ReturnInvalidToken(_response);
+               _response.Close();
+               return;
             }
 
             if (!File.Exists(requestData.FullPath))
@@ -292,11 +297,12 @@ namespace MS_WOPI.ProcessWopi
 
         public void HandleUnlockRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            // userId(user@polihub) will be passed from the policyHub application
+            if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
+               _errorHandler.ReturnInvalidToken(_response);
+               _response.Close();
+               return;
             }
             
             if (!File.Exists(requestData.FullPath))
@@ -344,12 +350,12 @@ namespace MS_WOPI.ProcessWopi
         
         public void HandleUnlockAndRelockRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            // userId(user@polihub) will be passed from the policyHub application
+            if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
-                
+               _errorHandler.ReturnInvalidToken(_response);
+               _response.Close();
+               return;
             }
 
             if (!File.Exists(requestData.FullPath))
