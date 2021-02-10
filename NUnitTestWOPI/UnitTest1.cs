@@ -52,14 +52,18 @@ namespace NUnitTestWOPI
         {
             string expectedValue = "Conflict";
 
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-WOPI-Override", "LOCK");
             request.AddHeader("X-WOPI-Lock", "abcde");
             IRestResponse response = client.Execute(request);
 
-            client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+            client = new RestClient(postUrl);
             client.Timeout = -1;
             request = new RestRequest(Method.POST);
             request.AddHeader("X-WOPI-Override", "LOCK");
@@ -72,7 +76,11 @@ namespace NUnitTestWOPI
         [Test]
         public void Test_Lock_FileUnKnown()
         {
-            var client = new RestClient("http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             string expectedValue = "NotFound";
             var request = new RestRequest(Method.POST);
@@ -109,7 +117,11 @@ namespace NUnitTestWOPI
             //passing the same value of X-WOPI-Lock as passed by last LOCK method
             string expectedValue = "OK";
 
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-WOPI-Override", "UNLOCK");
@@ -125,7 +137,11 @@ namespace NUnitTestWOPI
             //passing the same value of X-WOPI-Lock as passed by last LOCK method
             string expectedValue = "Conflict";
 
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-WOPI-Override", "UNLOCK");
@@ -138,7 +154,11 @@ namespace NUnitTestWOPI
         [Test]
         public void Test_UnLock_FileUnKnown()
         {
-            var client = new RestClient("http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             string expectedValue = "NotFound";
             var request = new RestRequest(Method.POST);
@@ -175,7 +195,11 @@ namespace NUnitTestWOPI
         {
             string expectedValue = "OK";
 
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-WOPI-Override", "REFRESH_LOCK");
@@ -190,7 +214,11 @@ namespace NUnitTestWOPI
         {
             string expectedValue = "Conflict";
 
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-WOPI-Override", "REFRESH_LOCK");
@@ -203,7 +231,11 @@ namespace NUnitTestWOPI
         [Test]
         public void Test_RefreshLock_FileUnKnown()
         {
-            var client = new RestClient("http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             string expectedValue = "NotFound";
             var request = new RestRequest(Method.POST);
@@ -240,7 +272,11 @@ namespace NUnitTestWOPI
         {
             string expectedValue = "OK";
 
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             var request = new RestRequest(Method.GET);
             request.AddHeader("X-WOPI-SessionContext", "afssgdsgdgdsgsdg");
@@ -266,7 +302,11 @@ namespace NUnitTestWOPI
         [Test]
         public void Test_CheckFileInfo_FileUnKnown()
         {
-            var client = new RestClient("http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             string expectedValue = "NotFound";
             var request = new RestRequest(Method.GET);
@@ -285,7 +325,12 @@ namespace NUnitTestWOPI
         public void Test_GetFileInfo_ReturnSuccess()
         {
             string expectedValue = "OK";
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             var request = new RestRequest(Method.GET);
             request.AddHeader("X-WOPI-MaxExpectedSize", "11");
@@ -308,7 +353,11 @@ namespace NUnitTestWOPI
         [Test]
         public void Test_GetFileInfo_FileUnKnown()
         {
-            var client = new RestClient("http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             string expectedValue = "NotFound";
             var request = new RestRequest(Method.GET);
@@ -320,14 +369,18 @@ namespace NUnitTestWOPI
         }
         #endregion
 
-        #region Unlock and Relock
+        #region Unlock and Relock needs to be discussed with team regarding endpoint implementation
 
         [Test]
         public void Test_UnLockReLock_ReturnSuccess()
         {
             string expectedValue = "OK";
 
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-WOPI-Override", "LOCK");
@@ -343,7 +396,11 @@ namespace NUnitTestWOPI
         {
             string expectedValue = "Conflict";
 
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-WOPI-Override", "LOCK");
@@ -357,7 +414,11 @@ namespace NUnitTestWOPI
         [Test]
         public void Test_UnLockReLock_FileUnKnown()
         {
-            var client = new RestClient("http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=afdasfas");
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/InCorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             client.Timeout = -1;
             string expectedValue = "NotFound";
             var request = new RestRequest(Method.POST);
@@ -388,7 +449,7 @@ namespace NUnitTestWOPI
 
         #endregion
 
-        #region PUT FILE 
+        #region PUT FILE Need to discuss with team for endpoint implementation
 
         [Test]
         public void Test_PUTFile_ReturnSuccess()
