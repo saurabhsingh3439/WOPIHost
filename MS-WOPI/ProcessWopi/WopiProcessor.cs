@@ -9,7 +9,6 @@ using MS_WOPI.Common;
 using System.Net;
 using MS_WOPI.Response.ResponseGenerator;
 using System.Runtime.Serialization.Json;
-using MS_WOPI.Handlers;
 
 namespace MS_WOPI.ProcessWopi
 {
@@ -26,90 +25,96 @@ namespace MS_WOPI.ProcessWopi
         }
         public void HandleCheckFileInfoRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: false))
+            lock (this)
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
-            }
-
-            if (!File.Exists(requestData.FullPath))
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                _response.Close();
-                return;
-            }
-
-            try
-            {
-                FileInfo fileInfo = new FileInfo(requestData.FullPath);
-                ResponseGenerator generator = new ResponseGenerator(fileInfo);
-                if (!fileInfo.Exists)
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
-                    _errorHandler.ReturnFileUnknown(_response);
+                    _errorHandler.ReturnInvalidToken(_response);
+                    _response.Close();
                     return;
                 }
 
-                var memoryStream = new MemoryStream();
-                var json = new DataContractJsonSerializer(typeof(WopiCheckFileInfo));
-                json.WriteObject(memoryStream, generator.GetFileInfoResponse());
-                memoryStream.Flush();
-                memoryStream.Position = 0;
-                StreamReader streamReader = new StreamReader(memoryStream);
-                var jsonResponse = Encoding.UTF8.GetBytes(streamReader.ReadToEnd());
+                if (!File.Exists(requestData.FullPath))
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                    _response.Close();
+                    return;
+                }
 
-                _response.ContentType = @"application/json";
-                _response.ContentLength64 = jsonResponse.Length;
-                _response.OutputStream.Write(jsonResponse, 0, jsonResponse.Length);
-                _errorHandler.ReturnSuccess(_response);
-                
+                try
+                {
+                    FileInfo fileInfo = new FileInfo(requestData.FullPath);
+                    ResponseGenerator generator = new ResponseGenerator(fileInfo);
+                    if (!fileInfo.Exists)
+                    {
+                        _errorHandler.ReturnFileUnknown(_response);
+                        return;
+                    }
+
+                    var memoryStream = new MemoryStream();
+                    var json = new DataContractJsonSerializer(typeof(WopiCheckFileInfo));
+                    json.WriteObject(memoryStream, generator.GetFileInfoResponse());
+                    memoryStream.Flush();
+                    memoryStream.Position = 0;
+                    StreamReader streamReader = new StreamReader(memoryStream);
+                    var jsonResponse = Encoding.UTF8.GetBytes(streamReader.ReadToEnd());
+
+                    _response.ContentType = @"application/json";
+                    _response.ContentLength64 = jsonResponse.Length;
+                    _response.OutputStream.Write(jsonResponse, 0, jsonResponse.Length);
+                    _errorHandler.ReturnSuccess(_response);
+
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+
+                }
+                _response.Close();
             }
-            catch (UnauthorizedAccessException)
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                
-            }
-            _response.Close();
         }
 
         public void HandleGetFileRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: false))
-            {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
-            }
 
-            if (!File.Exists(requestData.FullPath))
+            lock (this)
             {
-                _errorHandler.ReturnFileUnknown(_response);
-                _response.Close();
-                return;
-            }
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                {
+                    _errorHandler.ReturnInvalidToken(_response);
+                    _response.Close();
+                    return;
+                }
 
-            try
-            {
-                FileInfo fileInfo = new FileInfo(requestData.FullPath);
-                ResponseGenerator generator = new ResponseGenerator(fileInfo);
-                var content = generator.GetFileContent();
-                _response.ContentType = @"application/x-binary";
-                _response.ContentLength64 = content.Length;
-                _response.OutputStream.Write(content, 0, content.Length);
-                _errorHandler.ReturnSuccess(_response);
-                
+                if (!File.Exists(requestData.FullPath))
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                    _response.Close();
+                    return;
+                }
+                try
+                {
+                    FileInfo fileInfo = new FileInfo(requestData.FullPath);
+                    ResponseGenerator generator = new ResponseGenerator(fileInfo);
+                    var content = generator.GetFileContent();
+                    _response.ContentType = @"application/x-binary";
+                    _response.ContentLength64 = content.Length;
+                    _response.OutputStream.Write(content, 0, content.Length);
+                    _errorHandler.ReturnSuccess(_response);
+
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+
+                }
+                catch (FileNotFoundException)
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                }
             }
-            catch (UnauthorizedAccessException)
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                
-            }
-            catch (FileNotFoundException)
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                
-            }
-            _response.Close();
         }
 
         public static string GetFileVersion(string filename)
@@ -118,280 +123,297 @@ namespace MS_WOPI.ProcessWopi
             return fileInfo.LastWriteTimeUtc.ToString("O" /* ISO 8601 DateTime format string */); // Using the file write time is an arbitrary choice.
         }
 
-        
+
         public void HandlePutFileRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            lock (this)
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
-            }
-
-            if (!File.Exists(requestData.FullPath))
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                _response.Close();
-                return;
-            }
-            string newLock = requestData.LockId;
-            LockInfo existingLock;
-            bool hasExistingLock;
-
-            lock (LockInfo.Locks)
-            {
-                hasExistingLock = LockInfo.TryGetLock(requestData.Id, out existingLock);
-            }
-
-            if (hasExistingLock && existingLock.Lock != newLock)
-            {
-                // lock mismatch/locked by another interface
-                _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
-                _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
-                _response.StatusCode = (int)HttpStatusCode.Conflict;
-                _response.Close();
-                return;
-            }
-
-            FileInfo putTargetFileInfo = new FileInfo(requestData.FullPath);
-            
-            if (!hasExistingLock && putTargetFileInfo.Length != 0)
-            {
-                _response.AddHeader(WopiHeaders.Lock, newLock);
-                _response.AddHeader(WopiHeaders.LockFailureReason, "PutFile on unlocked file with current size != 0");
-                _response.StatusCode = (int)HttpStatusCode.Conflict;
-                _errorHandler.ReturnLockMismatch(_response, reason: "PutFile on unlocked file with current size != 0");
-                _response.Close();
-                return;
-            }
-
-            
-            try
-            {
-                ResponseGenerator generator = new ResponseGenerator(putTargetFileInfo);
-                
-                generator.Save(requestData.FileData);
-                _response.ContentLength64 = 0;
-                _response.ContentType = @"text/html";
-                _response.StatusCode = (int)HttpStatusCode.OK;
-                
-            }
-            catch (UnauthorizedAccessException)
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                
-            }
-            catch (IOException)
-            {
-                _errorHandler.ReturnServerError(_response);
-                
-            }
-            _response.Close();
-        }
-
-        
-        public void HandleLockRequest(WopiRequest requestData)
-        {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
-            {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
-            }
-
-            if (!File.Exists(requestData.FullPath))
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                _response.Close();
-                return;
-            }
-
-            string newLock = requestData.LockId;
-
-            lock (LockInfo.Locks)
-            {
-                LockInfo existingLock;
-                bool fLocked = LockInfo.TryGetLock(requestData.Id, out existingLock);
-                if (fLocked && existingLock.Lock != newLock)
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
-                    
+                    _errorHandler.ReturnInvalidToken(_response);
+                    _response.Close();
+                    return;
+                }
+
+                if (!File.Exists(requestData.FullPath))
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                    _response.Close();
+                    return;
+                }
+                string newLock = requestData.LockId;
+                LockInfo existingLock;
+                bool hasExistingLock;
+
+                lock (LockInfo.Locks)
+                {
+                    hasExistingLock = LockInfo.TryGetLock(requestData.Id, out existingLock);
+                }
+
+                if (hasExistingLock && existingLock.Lock != newLock)
+                {
+                    // lock mismatch/locked by another interface
                     _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
                     _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
                     _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
                     _response.StatusCode = (int)HttpStatusCode.Conflict;
-                    
+                    _response.Close();
+                    return;
                 }
-                else
-                {
-                    
-                    if (fLocked)
-                        LockInfo.Locks.Remove(requestData.Id);
 
-                    LockInfo.Locks[requestData.Id] = new LockInfo() { DateCreated = DateTime.UtcNow, Lock = newLock };
-                    _errorHandler.ReturnSuccess(_response);
+                FileInfo putTargetFileInfo = new FileInfo(requestData.FullPath);
+
+                if (!hasExistingLock && putTargetFileInfo.Length != 0)
+                {
                     _response.AddHeader(WopiHeaders.Lock, newLock);
-                    _response.StatusCode = (int)HttpStatusCode.OK;
+                    _response.AddHeader(WopiHeaders.LockFailureReason, "PutFile on unlocked file with current size != 0");
+                    _response.StatusCode = (int)HttpStatusCode.Conflict;
+                    _errorHandler.ReturnLockMismatch(_response, reason: "PutFile on unlocked file with current size != 0");
+                    _response.Close();
+                    return;
                 }
+
+
+                try
+                {
+                    ResponseGenerator generator = new ResponseGenerator(putTargetFileInfo);
+
+                    generator.Save(requestData.FileData);
+                    _response.ContentLength64 = 0;
+                    _response.ContentType = @"text/html";
+                    _response.StatusCode = (int)HttpStatusCode.OK;
+
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+
+                }
+                catch (IOException)
+                {
+                    _errorHandler.ReturnServerError(_response);
+
+                }
+                _response.Close();
             }
-            _response.Close();
         }
 
-        
-        public void HandleRefreshLockRequest(WopiRequest requestData)
+
+        public void HandleLockRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            lock (this)
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
-            }
-
-            if (!File.Exists(requestData.FullPath))
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                _response.Close();
-                return;
-            }
-
-            string newLock = requestData.LockId;
-
-            lock (LockInfo.Locks)
-            {
-                LockInfo existingLock;
-                if (LockInfo.TryGetLock(requestData.Id, out existingLock))
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
-                    if (existingLock.Lock == newLock)
+                    _errorHandler.ReturnInvalidToken(_response);
+                    _response.Close();
+                    return;
+                }
+
+                if (!File.Exists(requestData.FullPath))
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                    _response.Close();
+                    return;
+                }
+
+                string newLock = requestData.LockId;
+
+                lock (LockInfo.Locks)
+                {
+                    LockInfo existingLock;
+                    bool fLocked = LockInfo.TryGetLock(requestData.Id, out existingLock);
+                    if (fLocked && existingLock.Lock != newLock)
                     {
-                        
-                        existingLock.DateCreated = DateTime.UtcNow;
-                        _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                        _response.StatusCode = (int)HttpStatusCode.OK;
-                        _errorHandler.ReturnSuccess(_response);
-                        
-                    }
-                    else
-                    {
+
                         _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
                         _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
                         _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
+
+                    }
+                    else
+                    {
+
+                        if (fLocked)
+                            LockInfo.Locks.Remove(requestData.Id);
+
+                        LockInfo.Locks[requestData.Id] = new LockInfo() { DateCreated = DateTime.UtcNow, Lock = newLock };
+                        _errorHandler.ReturnSuccess(_response);
+                        _response.AddHeader(WopiHeaders.Lock, newLock);
+                        _response.StatusCode = (int)HttpStatusCode.OK;
                     }
                 }
-                else
-                {
-                    _errorHandler.ReturnLockMismatch(_response, reason: "File not locked");
-                    _response.AddHeader(WopiHeaders.Lock, newLock);
-                    _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
-                    _response.StatusCode = (int)HttpStatusCode.Conflict;
-                    
-                }
+                _response.Close();
             }
-            _response.Close();
+        }
+
+
+        public void HandleRefreshLockRequest(WopiRequest requestData)
+        {
+            lock (this)
+            {
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                {
+                    _errorHandler.ReturnInvalidToken(_response);
+                    _response.Close();
+                    return;
+                }
+                if (!File.Exists(requestData.FullPath))
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                    _response.Close();
+                    return;
+                }
+
+                string newLock = requestData.LockId;
+
+                lock (LockInfo.Locks)
+                {
+                    LockInfo existingLock;
+                    if (LockInfo.TryGetLock(requestData.Id, out existingLock))
+                    {
+                        if (existingLock.Lock == newLock)
+                        {
+
+                            existingLock.DateCreated = DateTime.UtcNow;
+                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            _response.StatusCode = (int)HttpStatusCode.OK;
+                            _errorHandler.ReturnSuccess(_response);
+
+                        }
+                        else
+                        {
+                            _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
+                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                            _response.StatusCode = (int)HttpStatusCode.Conflict;
+                        }
+                    }
+                    else
+                    {
+                        _errorHandler.ReturnLockMismatch(_response, reason: "File not locked");
+                        _response.AddHeader(WopiHeaders.Lock, newLock);
+                        _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
+                        _response.StatusCode = (int)HttpStatusCode.Conflict;
+
+                    }
+                }
+                _response.Close();
+            }
         }
 
         public void HandleUnlockRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            lock (this)
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
-            }
-            
-            if (!File.Exists(requestData.FullPath))
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                _response.Close();
-                return;
-            }
-
-            string newLock = requestData.LockId;
-
-            lock (LockInfo.Locks)
-            {
-                LockInfo existingLock;
-                if (LockInfo.TryGetLock(requestData.Id, out existingLock))
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
-                    if (existingLock.Lock == newLock)
+                    _errorHandler.ReturnInvalidToken(_response);
+                    _response.Close();
+                    return;
+                }
+                if (!File.Exists(requestData.FullPath))
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                    _response.Close();
+                    return;
+                }
+
+                string newLock = requestData.LockId;
+
+                lock (LockInfo.Locks)
+                {
+                    LockInfo existingLock;
+                    if (LockInfo.TryGetLock(requestData.Id, out existingLock))
                     {
-                        LockInfo.Locks.Remove(requestData.Id);
-                        _errorHandler.ReturnSuccess(_response);
-                        _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                        _response.StatusCode = (int)HttpStatusCode.OK;
-                        
+                        if (existingLock.Lock == newLock)
+                        {
+                            LockInfo.Locks.Remove(requestData.Id);
+                            _errorHandler.ReturnSuccess(_response);
+                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            _response.StatusCode = (int)HttpStatusCode.OK;
+
+                        }
+                        else
+                        {
+                            _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
+                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                            _response.StatusCode = (int)HttpStatusCode.Conflict;
+                        }
                     }
                     else
                     {
-                        _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
-                        _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                        _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                        _errorHandler.ReturnLockMismatch(_response, reason: "File not locked");
+                        _response.AddHeader(WopiHeaders.Lock, newLock);
+                        _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
+
                     }
                 }
-                else
-                {
-                    _errorHandler.ReturnLockMismatch(_response, reason: "File not locked");
-                    _response.AddHeader(WopiHeaders.Lock, newLock);
-                    _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
-                    _response.StatusCode = (int)HttpStatusCode.Conflict;
-                   
-                }
+                _response.Close();
             }
-            _response.Close();
         }
 
-        
+
         public void HandleUnlockAndRelockRequest(WopiRequest requestData)
         {
-            if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+            lock (this)
             {
-                _errorHandler.ReturnInvalidToken(_response);
-                _response.Close();
-                return;
-                
-            }
-
-            if (!File.Exists(requestData.FullPath))
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                _response.Close();
-                return;
-            }
-
-            string newLock = requestData.LockId;
-            string oldLock = requestData.OldLockId;
-
-            lock (LockInfo.Locks)
-            {
-                LockInfo existingLock;
-                if (LockInfo.TryGetLock(requestData.Id, out existingLock))
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
-                    if (existingLock.Lock == oldLock)
+                    _errorHandler.ReturnInvalidToken(_response);
+                    _response.Close();
+                    return;
+                }
+
+                if (!File.Exists(requestData.FullPath))
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                    _response.Close();
+                    return;
+                }
+
+                string newLock = requestData.LockId;
+                string oldLock = requestData.OldLockId;
+
+                lock (LockInfo.Locks)
+                {
+                    LockInfo existingLock;
+                    if (LockInfo.TryGetLock(requestData.Id, out existingLock))
                     {
-                        
-                        LockInfo.Locks[requestData.Id] = new LockInfo() { DateCreated = DateTime.UtcNow, Lock = newLock };
-                        _response.AddHeader(WopiHeaders.Lock, newLock);
-                        _response.StatusCode = (int)HttpStatusCode.OK;
-                        _errorHandler.ReturnSuccess(_response);
+                        if (existingLock.Lock == oldLock)
+                        {
+
+                            LockInfo.Locks[requestData.Id] = new LockInfo() { DateCreated = DateTime.UtcNow, Lock = newLock };
+                            _response.AddHeader(WopiHeaders.Lock, newLock);
+                            _response.StatusCode = (int)HttpStatusCode.OK;
+                            _errorHandler.ReturnSuccess(_response);
+                        }
+                        else
+                        {
+                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                            _response.StatusCode = (int)HttpStatusCode.Conflict;
+                            _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
+                        }
                     }
                     else
                     {
-                        _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                        _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                        _response.AddHeader(WopiHeaders.Lock, newLock);
+                        _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
-                        _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
+                        _errorHandler.ReturnLockMismatch(_response, reason: "File not locked");
                     }
                 }
-                else
-                {
-                    _response.AddHeader(WopiHeaders.Lock, newLock);
-                    _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
-                    _response.StatusCode = (int)HttpStatusCode.Conflict;
-                    _errorHandler.ReturnLockMismatch(_response, reason: "File not locked");
-                }
+                _response.Close();
             }
-            _response.Close();
         }
 
         public void HandlePutRelativeFileRequest(WopiRequest requestData)
@@ -435,7 +457,7 @@ namespace MS_WOPI.ProcessWopi
                     // Specific mode...use the exact filename
                     fileName = requestData.RelativeTarget;
                     bool IsinvalidName = (string.IsNullOrEmpty(fileName) || fileName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0);
-                    if(IsinvalidName || fileName.IndexOf('.') == 0)
+                    if (IsinvalidName || fileName.IndexOf('.') == 0)
                     {
                         _errorHandler.ReturnBadRequest(_response);
                         _response.Close();
@@ -447,7 +469,7 @@ namespace MS_WOPI.ProcessWopi
                     //if file already exist
                     if (File.Exists(filePath))
                     {
-                        if(!requestData.OverwriteTarget)
+                        if (!requestData.OverwriteTarget)
                         {
                             while (File.Exists(filePath))
                             {
@@ -479,7 +501,7 @@ namespace MS_WOPI.ProcessWopi
                                 return;
                             }
                         }
-                        
+
                     }
                 }
                 else
@@ -500,16 +522,16 @@ namespace MS_WOPI.ProcessWopi
                         int i = 0;
                         while (File.Exists(filePath))
                         {
-                            i = i + 1; 
+                            i = i + 1;
                             var filenamewithoutext = Path.GetFileNameWithoutExtension(fileName);
-                            if(!filenamewithoutext.EndsWith(i.ToString()))
+                            if (!filenamewithoutext.EndsWith(i.ToString()))
                             {
-                                if (filenamewithoutext.Substring(filenamewithoutext.Length - 1) == (i-1).ToString())
+                                if (filenamewithoutext.Substring(filenamewithoutext.Length - 1) == (i - 1).ToString())
                                     filenamewithoutext = filenamewithoutext.Substring(0, filenamewithoutext.Length - 1);
 
                                 fileName = filenamewithoutext + i.ToString() + Path.GetExtension(filePath);
                             }
-                          
+
 
                             filePath = WopiHandler.LocalStoragePath + fileName;
                         }
@@ -545,7 +567,7 @@ namespace MS_WOPI.ProcessWopi
                 }
                 _response.Close();
             }
-         }
+        }
 
         private static string MakeValidFileName(string name)
         {
