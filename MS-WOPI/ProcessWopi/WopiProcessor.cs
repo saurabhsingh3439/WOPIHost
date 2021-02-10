@@ -28,7 +28,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if (!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id))
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -81,7 +81,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -94,25 +94,26 @@ namespace MS_WOPI.ProcessWopi
                     _response.Close();
                     return;
                 }
-            try
-            {
-                FileInfo fileInfo = new FileInfo(requestData.FullPath);
-                ResponseGenerator generator = new ResponseGenerator(fileInfo);
-                var content = generator.GetFileContent();
-                _response.ContentType = @"application/x-binary";
-                _response.ContentLength64 = content.Length;
-                _response.OutputStream.Write(content, 0, content.Length);
-                _errorHandler.ReturnSuccess(_response);
-                
-            }
-            catch (UnauthorizedAccessException)
-            {
-                _errorHandler.ReturnFileUnknown(_response);
-                
-            }
-            catch (FileNotFoundException)
-            {
-                _errorHandler.ReturnFileUnknown(_response);
+                try
+                {
+                    FileInfo fileInfo = new FileInfo(requestData.FullPath);
+                    ResponseGenerator generator = new ResponseGenerator(fileInfo);
+                    var content = generator.GetFileContent();
+                    _response.ContentType = @"application/x-binary";
+                    _response.ContentLength64 = content.Length;
+                    _response.OutputStream.Write(content, 0, content.Length);
+                    _errorHandler.ReturnSuccess(_response);
+
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+
+                }
+                catch (FileNotFoundException)
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                }
             }
         }
 
@@ -122,13 +123,13 @@ namespace MS_WOPI.ProcessWopi
             return fileInfo.LastWriteTimeUtc.ToString("O" /* ISO 8601 DateTime format string */); // Using the file write time is an arbitrary choice.
         }
 
-        
+
         public void HandlePutFileRequest(WopiRequest requestData)
         {
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -197,13 +198,13 @@ namespace MS_WOPI.ProcessWopi
             }
         }
 
-        
+
         public void HandleLockRequest(WopiRequest requestData)
         {
             lock (this)
             {
-               // userId(user@polihub) will be passed from the policyHub application
-                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -248,13 +249,13 @@ namespace MS_WOPI.ProcessWopi
             }
         }
 
-        
+
         public void HandleRefreshLockRequest(WopiRequest requestData)
         {
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -308,8 +309,8 @@ namespace MS_WOPI.ProcessWopi
         {
             lock (this)
             {
-                 // userId(user@polihub) will be passed from the policyHub application
-                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -358,13 +359,13 @@ namespace MS_WOPI.ProcessWopi
             }
         }
 
-        
+
         public void HandleUnlockAndRelockRequest(WopiRequest requestData)
         {
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
+                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
