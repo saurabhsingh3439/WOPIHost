@@ -80,6 +80,8 @@ namespace MS_WOPI.Handlers
                     _processor.HandlePutFileRequest(requestData);
                     break;
                 case RequestType.PutRelativeFile:
+                    _processor.HandlePutRelativeFileRequest(requestData);
+                    break;
                 case RequestType.EnumerateChildren:
                 case RequestType.CheckFolderInfo:
                 case RequestType.DeleteFile:
@@ -150,6 +152,21 @@ namespace MS_WOPI.Handlers
                         {
                             case "PUT_RELATIVE":
                                 requestData.Type = RequestType.PutRelativeFile;
+                                if (request.Headers[WopiHeaders.RelativeTarget] != null) 
+                                    requestData.RelativeTarget = request.Headers[WopiHeaders.RelativeTarget];
+                                if (request.Headers[WopiHeaders.SuggestedTarget] != null) 
+                                    requestData.SuggestedTarget = request.Headers[WopiHeaders.SuggestedTarget];
+                                if (request.Headers[WopiHeaders.OverwriteRelativeTarget] != null)
+                                    requestData.OverwriteTarget = bool.Parse(request.Headers[WopiHeaders.OverwriteRelativeTarget]);
+
+                                using (var memstream = new MemoryStream())
+                                {
+                                    memstream.Flush();
+                                    memstream.Position = 0;
+                                    request.InputStream.CopyTo(memstream);
+                                    requestData.FileData = memstream.ToArray();
+                                }
+
                                 break;
                             case "LOCK":
                                 if (request.Headers[WopiHeaders.OldLock] != null)

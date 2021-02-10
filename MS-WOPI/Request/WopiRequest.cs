@@ -44,6 +44,7 @@ namespace MS_WOPI.Request
         public const string SuggestedTarget = "X-WOPI-SuggestedTarget";
         public const string RelativeTarget = "X-WOPI-RelativeTarget";
         public const string OverwriteRelativeTarget = "X-WOPI-OverwriteRelativeTarget";
+        public const string ValidRelativeTarget = "X-WOPI-ValidRelativeTarget";
     }
 
     public class WopiRequest
@@ -63,6 +64,10 @@ namespace MS_WOPI.Request
 
         public string LockId { get; set; }
         public string OldLockId { get; set; }
+        public string RelativeTarget { get; set; }
+        public string SuggestedTarget { get; set; }
+        public bool OverwriteTarget { get; set; }
+        
 
-        }
+    }
     }

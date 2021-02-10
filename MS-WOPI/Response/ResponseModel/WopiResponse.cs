@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace MS_WOPI.Response
@@ -27,11 +28,16 @@ namespace MS_WOPI.Response
         public string UserFriendlyName { get; set; }
     }
 
+    [DataContract]
     class PutRelativeFileResponse
     {
+        [DataMember]
         public string Name { get; set; }
+        [DataMember]
         public string Url { get; set; }
+        [DataMember]
         public string HostViewUrl { get; set; }
+        [DataMember]
         public string HostEditUrl { get; set; }
     }
 
