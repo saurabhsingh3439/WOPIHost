@@ -574,6 +574,47 @@ namespace MS_WOPI.ProcessWopi
             }
         }
 
+        public void GetFileLockId(WopiRequest requestData)
+        {
+            lock (this)
+            {
+                if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+                {
+                    _errorHandler.ReturnInvalidToken(_response);
+                    _response.Close();
+                    return;
+
+                }
+
+                if (!File.Exists(requestData.FullPath))
+                {
+                    _errorHandler.ReturnFileUnknown(_response);
+                    _response.Close();
+                    return;
+                }
+
+                lock (LockInfo.Locks)
+                {
+                    LockInfo existingLock;
+                    bool fLocked = LockInfo.TryGetLock(requestData.Id, out existingLock);
+                    if (fLocked)
+                    {
+                        _errorHandler.ReturnSuccess(_response);
+                        _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                        _response.StatusCode = (int)HttpStatusCode.OK;
+                    }
+                    else
+                    {
+                        _errorHandler.ReturnSuccess(_response);
+                        _response.AddHeader(WopiHeaders.Lock, "");
+                        _response.AddHeader(WopiHeaders.LockFailureReason, "No Lock for the fileid");
+                        _response.StatusCode = (int)HttpStatusCode.OK;
+                    }
+                }
+                _response.Close();
+            }
+        }
+
         private static string MakeValidFileName(string name)
         {
             string invalidChars = System.Text.RegularExpressions.Regex.Escape(new string(System.IO.Path.GetInvalidFileNameChars()));
