@@ -89,6 +89,9 @@ namespace MS_WOPI.Handlers
                 case RequestType.PutRelativeFile:
                     _processor.HandlePutRelativeFileRequest(requestData);
                     break;
+                case RequestType.GetLock:
+                    _processor.GetFileLockId(requestData);
+                    break;
                 case RequestType.EnumerateChildren:
                 case RequestType.CheckFolderInfo:
                 case RequestType.DeleteFile:
@@ -201,6 +204,9 @@ namespace MS_WOPI.Handlers
                                 break;
                             case "REVOKE_RESTRICTED_LINK":
                                 requestData.Type = RequestType.RevokeRestrictedLink;
+                                break;
+                            case "GET_LOCK":
+                                requestData.Type = RequestType.GetLock;
                                 break;
                         }
                     }

@@ -4,7 +4,6 @@ using System.Text;
 using System.Net;
 using MS_WOPI.Request;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Mvc;
 
 namespace MS_WOPI.Interfaces
 {

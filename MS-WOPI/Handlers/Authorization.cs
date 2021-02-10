@@ -9,7 +9,6 @@ using System.Linq;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using MS_WOPI.Common;
-using Microsoft.AspNetCore.Mvc;
 
 namespace MS_WOPI.Handlers
 {

@@ -27,6 +27,7 @@ namespace MS_WOPI.Request
 
         GetFile,
         PutFile,
+        GetLock,
 
         EnumerateChildren,
     }
