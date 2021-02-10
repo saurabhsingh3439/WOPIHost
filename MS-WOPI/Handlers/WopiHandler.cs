@@ -24,10 +24,11 @@ namespace MS_WOPI.Handlers
         private IErrorHandler _errHandler;
         private IAuthorization _authorization;
         private IWopiProcessor _processor;
+        private WopiUserRequest _userRequest;
 
-        public WopiHandler(string storagePath)
+        public WopiHandler(WopiUserRequest wopiUser)
         {
-            //LocalStoragePath = storagePath;
+            _userRequest = wopiUser;
             _errHandler = new ErrorHandler();
             _authorization = new Authorization();
         }

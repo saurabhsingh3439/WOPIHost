@@ -27,7 +27,8 @@ namespace MS_WOPI.ProcessWopi
         {
             lock (this)
             {
-                if (!_authorization.ValidateAccess(requestData, writeAccessRequired: false))
+                // userId(user@polihub) will be passed from the policyHub application
+                if (!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -76,9 +77,11 @@ namespace MS_WOPI.ProcessWopi
 
         public void HandleGetFileRequest(WopiRequest requestData)
         {
+
             lock (this)
             {
-                if (!_authorization.ValidateAccess(requestData, writeAccessRequired: false))
+                // userId(user@polihub) will be passed from the policyHub application
+                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -124,7 +127,8 @@ namespace MS_WOPI.ProcessWopi
         {
             lock (this)
             {
-                if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+                // userId(user@polihub) will be passed from the policyHub application
+                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -198,7 +202,8 @@ namespace MS_WOPI.ProcessWopi
         {
             lock (this)
             {
-                if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+               // userId(user@polihub) will be passed from the policyHub application
+                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -248,13 +253,13 @@ namespace MS_WOPI.ProcessWopi
         {
             lock (this)
             {
-                if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+                // userId(user@polihub) will be passed from the policyHub application
+                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
                     return;
                 }
-
                 if (!File.Exists(requestData.FullPath))
                 {
                     _errorHandler.ReturnFileUnknown(_response);
@@ -303,13 +308,13 @@ namespace MS_WOPI.ProcessWopi
         {
             lock (this)
             {
-                if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+                 // userId(user@polihub) will be passed from the policyHub application
+                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
                     return;
                 }
-
                 if (!File.Exists(requestData.FullPath))
                 {
                     _errorHandler.ReturnFileUnknown(_response);
@@ -358,12 +363,12 @@ namespace MS_WOPI.ProcessWopi
         {
             lock (this)
             {
-                if (!_authorization.ValidateAccess(requestData, writeAccessRequired: true))
+                // userId(user@polihub) will be passed from the policyHub application
+                if(!_authorization.ValidateToken(requestData.AccessToken,"user@policyhub",requestData.Id)) 
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
                     return;
-
                 }
 
                 if (!File.Exists(requestData.FullPath))
