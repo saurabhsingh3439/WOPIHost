@@ -1,0 +1,10 @@
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\bin\Debug\WOPIFileServer.exe.config
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\bin\Debug\WOPIFileServer.exe
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\bin\Debug\WOPIFileServer.pdb
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\bin\Debug\MS-WOPI.dll
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\bin\Debug\MS-WOPI.pdb
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\obj\Debug\WOPIFileServer.csprojAssemblyReference.cache
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\obj\Debug\WOPIFileServer.csproj.CoreCompileInputs.cache
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\obj\Debug\WOPIFileServer.csproj.CopyComplete
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\obj\Debug\WOPIFileServer.exe
+C:\Users\Saurabh.Singh\source\repos\WOPIFileServer\obj\Debug\WOPIFileServer.pdb

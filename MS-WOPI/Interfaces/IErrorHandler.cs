@@ -14,5 +14,7 @@ namespace MS_WOPI.Interfaces
         void ReturnLockMismatch(HttpListenerResponse response, string existingLock = null, string reason = null);
         void ReturnServerError(HttpListenerResponse response);
         void ReturnUnsupported(HttpListenerResponse response);
+        void ReturnBadRequest(HttpListenerResponse response);
+        void ReturnConflict(HttpListenerResponse response, string reason = null);
     }
 }

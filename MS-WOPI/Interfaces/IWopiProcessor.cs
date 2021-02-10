@@ -14,5 +14,6 @@ namespace MS_WOPI.Interfaces
         void HandleRefreshLockRequest(WopiRequest requestData);
         void HandleUnlockRequest(WopiRequest requestData);
         void HandleUnlockAndRelockRequest(WopiRequest requestData);
+        void HandlePutRelativeFileRequest(WopiRequest requestData);
     }
 }

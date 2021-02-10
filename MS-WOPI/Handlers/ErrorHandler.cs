@@ -27,6 +27,11 @@ namespace MS_WOPI.Handlers
             _statusValidator.ReturnStatus(response, 401, "Invalid Token");
         }
 
+        public void ReturnBadRequest(HttpListenerResponse response)
+        {
+            _statusValidator.ReturnStatus(response, 400, "Bad Request");
+        }
+
         public void ReturnFileUnknown(HttpListenerResponse response)
         {
             _statusValidator.ReturnStatus(response, 404, "File Unknown/User Unauthorized");
@@ -43,6 +48,11 @@ namespace MS_WOPI.Handlers
             }
 
             _statusValidator.ReturnStatus(response, 409, "Lock mismatch/Locked by another interface");
+        }
+
+        public void ReturnConflict(HttpListenerResponse response, string reason = null)
+        {
+            _statusValidator.ReturnStatus(response, 409, "Conflict");
         }
 
         public void ReturnServerError(HttpListenerResponse response)
