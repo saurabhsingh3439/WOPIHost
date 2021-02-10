@@ -93,7 +93,6 @@ namespace MS_WOPI.ProcessWopi
                 ResponseGenerator generator = new ResponseGenerator(fileInfo);
                 var content = generator.GetFileContent();
                 _response.ContentType = @"application/x-binary";
-                //_response.ContentType = @"application/octet-stream";
                 _response.ContentLength64 = content.Length;
                 _response.OutputStream.Write(content, 0, content.Length);
                 _errorHandler.ReturnSuccess(_response);
@@ -163,6 +162,8 @@ namespace MS_WOPI.ProcessWopi
                 _response.AddHeader(WopiHeaders.LockFailureReason, "PutFile on unlocked file with current size != 0");
                 _response.StatusCode = (int)HttpStatusCode.Conflict;
                 _errorHandler.ReturnLockMismatch(_response, reason: "PutFile on unlocked file with current size != 0");
+                _response.Close();
+                return;
             }
 
             
@@ -173,7 +174,6 @@ namespace MS_WOPI.ProcessWopi
                 generator.Save(requestData.FileData);
                 _response.ContentLength64 = 0;
                 _response.ContentType = @"text/html";
-                _response.AddHeader(WopiHeaders.Lock, newLock);
                 _response.StatusCode = (int)HttpStatusCode.OK;
                 
             }

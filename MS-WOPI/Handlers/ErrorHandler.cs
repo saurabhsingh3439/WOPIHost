@@ -34,10 +34,12 @@ namespace MS_WOPI.Handlers
 
         public void ReturnLockMismatch(HttpListenerResponse response, string existingLock = null, string reason = null)
         {
-            //response.Headers[WopiHeaders.Lock] = existingLock ?? String.Empty;
+            response.Headers[WopiHeaders.Lock] = existingLock ?? String.Empty;
             if (!String.IsNullOrEmpty(reason))
             {
-                //response.Headers[WopiHeaders.LockFailureReason] = reason;
+                response.Headers[WopiHeaders.LockFailureReason] = reason;
+                _statusValidator.ReturnStatus(response, 409, reason);
+                return;
             }
 
             _statusValidator.ReturnStatus(response, 409, "Lock mismatch/Locked by another interface");

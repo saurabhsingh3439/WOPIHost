@@ -57,6 +57,7 @@ namespace MS_WOPI.Response.ResponseGenerator
             }
             return ms.ToArray();
         }
+
         public void Save(byte[] new_content)
         {
             lock (_info)
