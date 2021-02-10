@@ -8,6 +8,7 @@ using MS_WOPI.Response;
 using System.Net;
 using MS_WOPI.ProcessWopi;
 using System.IO;
+using System.Threading;
 
 namespace MS_WOPI.Handlers
 {
@@ -39,7 +40,12 @@ namespace MS_WOPI.Handlers
         
         public void ProcessRequest(IAsyncResult result)
         {
-            
+            Thread process_thread = new Thread(() => ProcessRequestPrivate(result));
+            process_thread.Start();
+        }
+        
+        public void ProcessRequestPrivate(IAsyncResult result)
+        {
             HttpListener listener = (HttpListener)result.AsyncState;
             HttpListenerContext context = listener.EndGetContext(result);
             if (!_authorization.ValidateWopiProofKey(context.Request))

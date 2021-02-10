@@ -19,6 +19,8 @@ namespace MS_WOPI
         private int m_port = 8080;
         private WopiHandler _handler;
 
+        private const int MaximumRequestCount = 50; //to be read from config file
+
         //this class will be called from the application
         public WopiHost(WopiUserRequest wopiUser)
         {
@@ -33,7 +35,7 @@ namespace MS_WOPI
             // localhost may change to the real hostname or IP
             m_listener.Prefixes.Add(String.Format("http://localhost:{0}/wopi/", m_port));
             m_listener.Start();
-            for (int i = 0; i < 50; i++)
+            for (int i = 0; i < MaximumRequestCount; i++)
             {
                 m_listener.BeginGetContext(new AsyncCallback(_handler.ProcessRequest), m_listener);
             }
