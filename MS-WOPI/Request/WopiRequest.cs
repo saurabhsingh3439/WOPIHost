@@ -59,11 +59,10 @@ namespace MS_WOPI.Request
             get { return Path.Combine(WopiHandler.LocalStoragePath, Id); }
         }
 
-        public byte[] FileData
-        {
-            get { return File.ReadAllBytes(FullPath);  }
-        }
+        public byte[] FileData { get; set; }
+
         public string LockId { get; set; }
         public string OldLockId { get; set; }
+
+        }
     }
-}

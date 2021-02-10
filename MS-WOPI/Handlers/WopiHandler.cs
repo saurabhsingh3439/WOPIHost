@@ -24,7 +24,6 @@ namespace MS_WOPI.Handlers
         private IErrorHandler _errHandler;
         private IAuthorization _authorization;
         private IWopiProcessor _processor;
-        //private WopiResponse _response;
 
         public WopiHandler(string storagePath)
         {
@@ -115,7 +114,6 @@ namespace MS_WOPI.Handlers
             };
 
             string requestPath = request.Url.AbsolutePath;
-            // remove /<...>/wopi/
             string wopiPath = requestPath.Substring(WopiPath.Length);
 
             if (wopiPath.StartsWith(FilesRequestPath))
@@ -132,7 +130,14 @@ namespace MS_WOPI.Handlers
                     if (request.HttpMethod == "POST")
                     {
                         requestData.Type = RequestType.PutFile;
-                    }
+                        using (var memstream = new MemoryStream())
+                        {
+                            memstream.Flush();
+                            memstream.Position = 0;
+                            request.InputStream.CopyTo(memstream);
+                            requestData.FileData = memstream.ToArray();
+                        }
+                     }
                 }
                 else
                 {
