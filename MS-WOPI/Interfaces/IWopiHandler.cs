@@ -8,5 +8,6 @@ namespace MS_WOPI.Interfaces
     interface IWopiHandler
     {
         void ProcessRequest(IAsyncResult request);
+        void ProcessRequestPrivate(IAsyncResult request);
     }
 }
