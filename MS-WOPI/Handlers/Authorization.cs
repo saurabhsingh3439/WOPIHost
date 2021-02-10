@@ -34,7 +34,7 @@ namespace MS_WOPI.Handlers
          {
             if (_key is null)
             {
-               var key = Encoding.ASCII.GetBytes("secretKeysecretKeysecretKey123" + new Random(DateTime.Now.Millisecond).Next(1,999));
+                    var key = Encoding.ASCII.GetBytes("secretKeysecretKeysecretKey123");   // + new Random(DateTime.Now.Millisecond).Next(1,999));
                _key = new SymmetricSecurityKey(key);
             }
 
@@ -65,16 +65,19 @@ namespace MS_WOPI.Handlers
   
       public bool ValidateToken(string tokenString, string userId, string docId)
       {
-         // Initialize the token handler and validation parameters
-         var tokenHandler = new JwtSecurityTokenHandler();
-         var tokenValidation = new TokenValidationParameters
-         {
-            ValidAudience = "https://officewopi.azurewebsites.net",
-            ValidIssuer = "https://officewopi.azurewebsites.net",
-            IssuerSigningKey = Key
-         };
+            // Initialize the token handler and validation parameters
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenValidation = new TokenValidationParameters
+            {
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                ValidateActor = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = Key
+            };
 
-         try
+            try
          {
             SecurityToken token = null;
             var principal = tokenHandler.ValidateToken(tokenString, tokenValidation, out token);
