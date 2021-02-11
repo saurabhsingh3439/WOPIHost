@@ -4,6 +4,7 @@ using MS_WOPI.Interfaces;
 using NUnit.Framework;
 using RestSharp;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Net;
 
 namespace NUnitTestWOPI
@@ -449,19 +450,45 @@ namespace NUnitTestWOPI
 
         #endregion
 
-        #region PUT FILE Need to discuss with team for endpoint implementation
+        #region PUT FILE 
 
         [Test]
         public void Test_PUTFile_ReturnSuccess()
         {
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt/contents?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
             string expectedValue = "OK";
-
-            var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt?access_token=afdasfas");
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("X-WOPI-Override", "PUT");
             request.AddHeader("X-WOPI-Lock", "abcd");
             request.AddHeader("X-WOPI-Editors", "Test");
+            var byts = File.ReadAllBytes(@"c:\WopiStorage\CorrectPath2.txt");
+            request.AddParameter("application/json", byts);
+            IRestResponse response = client.Execute(request);
+            Assert.AreEqual(expectedValue, response.StatusCode.ToString());
+
+        }
+
+        [Test]
+        public void Test_PUTFile_ReturnConflict()
+        {
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt/contents?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
+            string expectedValue = "Conflict";
+            client.Timeout = -1;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("X-WOPI-Override", "PUT");
+            request.AddHeader("X-WOPI-Lock", "abcd");
+            request.AddHeader("X-WOPI-Editors", "Test");
+            var byts = File.ReadAllBytes(@"c:\WopiStorage\CorrectPath.txt");
+            request.AddParameter("application/json", byts);
             IRestResponse response = client.Execute(request);
             Assert.AreEqual(expectedValue, response.StatusCode.ToString());
 
@@ -469,6 +496,48 @@ namespace NUnitTestWOPI
 
         #endregion
 
+         #region PutRelativeFile
+        [Test]
+        public void Test_PutRelativeFile_ReturnSuccess()
+        {
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
+            client.Timeout = -1;
+            string expectedValue = "OK";
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("X-WOPI-Override", "PUT_RELATIVE");
+            request.AddHeader("X-WOPI-SuggestedTarget", "ab<c.txt");
+            var byts = File.ReadAllBytes(@"c:\WopiStorage\CorrectPath.txt");
+            request.AddParameter("application/json", byts);
+            var response = client.Execute(request);
+            Assert.AreEqual(expectedValue, response.StatusCode.ToString());
+        }
+
+        [Test]
+        public void Test_PutRelativeFile_ReturnBadRequest()
+        {
+            SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
+            var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
+            var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
+            var postUrl = url + strToken;
+            var client = new RestClient(postUrl);
+            client.Timeout = -1;
+            string expectedValue = "BadRequest";
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("X-WOPI-Override", "PUT_RELATIVE");
+            request.AddHeader("X-WOPI-SuggestedTarget", "ab<c.txt");
+            request.AddHeader("X-WOPI-OverwriteRelativeTarget", "true");
+            request.AddHeader("X-WOPI-RelativeTarget", "abc.txt");
+            var byts = File.ReadAllBytes(@"c:\WopiStorage\CorrectPath.txt");
+            request.AddParameter("application/json", byts);
+            var response = client.Execute(request);
+            Assert.AreEqual(expectedValue, response.StatusCode.ToString());
+        }
+
+        #endregion
 
     }
 }
