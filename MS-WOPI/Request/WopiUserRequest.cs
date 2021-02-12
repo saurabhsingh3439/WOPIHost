@@ -6,9 +6,9 @@ namespace MS_WOPI.Request
 {
    public class WopiUserRequest
    {
+      public ActionType Action;
       public string userId;
       public string resourceId;
-      public ActionType Action;
       public string docsPath;
 
    }

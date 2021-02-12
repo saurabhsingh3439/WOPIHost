@@ -21,6 +21,8 @@ namespace MS_WOPI.Handlers
         private const string ChildrenRequestPath = @"/children";
         public static string LocalStoragePath = @"c:\WopiStorage\";
 
+        private static readonly Dictionary<string, LockInfo> Locks = new Dictionary<string, LockInfo>(); 
+        
         private IErrorHandler _errHandler;
         private IAuthorization _authorization;
         private IWopiProcessor _processor;
@@ -33,11 +35,132 @@ namespace MS_WOPI.Handlers
             _authorization = new Authorization();
         }
 
-        private static readonly Dictionary<string, LockInfo> Locks = new Dictionary<string, LockInfo>();
+        private static WopiRequest ParseRequest(HttpListenerRequest request)
+        {
+            WopiRequest requestData = new WopiRequest()
+            {
+                Type = RequestType.None,
+                AccessToken = request.QueryString["access_token"],
+                Id = "",
+                LockId = request.Headers[WopiHeaders.Lock],
+                OldLockId = request.Headers[WopiHeaders.OldLock]
+            };
 
-        
+            string requestPath = request.Url.AbsolutePath;
+            string wopiPath = requestPath.Substring(WopiPath.Length);
 
-        
+            if (wopiPath.StartsWith(FilesRequestPath))
+            {
+                string rawId = wopiPath.Substring(FilesRequestPath.Length);
+
+                if (rawId.EndsWith(ContentsRequestPath))
+                {
+
+                    requestData.Id = rawId.Substring(0, rawId.Length - ContentsRequestPath.Length);
+
+                    if (request.HttpMethod == "GET")
+                        requestData.Type = RequestType.GetFile;
+                    if (request.HttpMethod == "POST")
+                    {
+                        requestData.Type = RequestType.PutFile;
+                        using (var memstream = new MemoryStream())
+                        {
+                            memstream.Flush();
+                            memstream.Position = 0;
+                            request.InputStream.CopyTo(memstream);
+                            requestData.FileData = memstream.ToArray();
+                        }
+                    }
+                }
+                else
+                {
+                    requestData.Id = rawId;
+
+                    if (request.HttpMethod == "GET")
+                    {
+                        requestData.Type = RequestType.CheckFileInfo;
+                    }
+                    else if (request.HttpMethod == "POST")
+                    {
+
+                        string wopiOverride = request.Headers[WopiHeaders.RequestType];
+
+                        switch (wopiOverride)
+                        {
+                            case "PUT_RELATIVE":
+                                requestData.Type = RequestType.PutRelativeFile;
+                                if (request.Headers[WopiHeaders.RelativeTarget] != null)
+                                    requestData.RelativeTarget = request.Headers[WopiHeaders.RelativeTarget];
+                                if (request.Headers[WopiHeaders.SuggestedTarget] != null)
+                                    requestData.SuggestedTarget = request.Headers[WopiHeaders.SuggestedTarget];
+                                if (request.Headers[WopiHeaders.OverwriteRelativeTarget] != null)
+                                    requestData.OverwriteTarget = bool.Parse(request.Headers[WopiHeaders.OverwriteRelativeTarget]);
+
+                                using (var memstream = new MemoryStream())
+                                {
+                                    memstream.Flush();
+                                    memstream.Position = 0;
+                                    request.InputStream.CopyTo(memstream);
+                                    requestData.FileData = memstream.ToArray();
+                                }
+
+                                break;
+                            case "LOCK":
+                                if (request.Headers[WopiHeaders.OldLock] != null)
+                                    requestData.Type = RequestType.UnlockAndRelock;
+                                else
+                                    requestData.Type = RequestType.Lock;
+                                break;
+                            case "UNLOCK":
+                                requestData.Type = RequestType.Unlock;
+                                break;
+                            case "REFRESH_LOCK":
+                                requestData.Type = RequestType.RefreshLock;
+                                break;
+                            case "COBALT":
+                                requestData.Type = RequestType.ExecuteCobaltRequest;
+                                break;
+                            case "DELETE":
+                                requestData.Type = RequestType.DeleteFile;
+                                break;
+                            case "READ_SECURE_STORE":
+                                requestData.Type = RequestType.ReadSecureStore;
+                                break;
+                            case "GET_RESTRICTED_LINK":
+                                requestData.Type = RequestType.GetRestrictedLink;
+                                break;
+                            case "REVOKE_RESTRICTED_LINK":
+                                requestData.Type = RequestType.RevokeRestrictedLink;
+                                break;
+                            case "GET_LOCK":
+                                requestData.Type = RequestType.GetLock;
+                                break;
+                        }
+                    }
+                }
+            }
+            else if (wopiPath.StartsWith(FoldersRequestPath))
+            {
+                string rawId = wopiPath.Substring(FoldersRequestPath.Length);
+
+                if (rawId.EndsWith(ChildrenRequestPath))
+                {
+                    requestData.Id = rawId.Substring(0, rawId.Length - ChildrenRequestPath.Length);
+                    requestData.Type = RequestType.EnumerateChildren;
+                }
+                else
+                {
+                    requestData.Id = rawId;
+                    requestData.Type = RequestType.CheckFolderInfo;
+                }
+            }
+            else
+            {
+                requestData.Type = RequestType.None;
+            }
+            return requestData;
+        }
+
         public void ProcessRequest(IAsyncResult result)
         {
             Thread process_thread = new Thread(() => ProcessRequestPrivate(result));
@@ -108,131 +231,7 @@ namespace MS_WOPI.Handlers
             }
         }
 
-        private static WopiRequest ParseRequest(HttpListenerRequest request)
-        {
-            WopiRequest requestData = new WopiRequest()
-            {
-                Type = RequestType.None,
-                AccessToken = request.QueryString["access_token"],
-                Id = "",
-                LockId = request.Headers[WopiHeaders.Lock],
-                OldLockId = request.Headers[WopiHeaders.OldLock]
-            };
-
-            string requestPath = request.Url.AbsolutePath;
-            string wopiPath = requestPath.Substring(WopiPath.Length);
-
-            if (wopiPath.StartsWith(FilesRequestPath))
-            {
-                string rawId = wopiPath.Substring(FilesRequestPath.Length);
-
-                if (rawId.EndsWith(ContentsRequestPath))
-                {
-
-                    requestData.Id = rawId.Substring(0, rawId.Length - ContentsRequestPath.Length);
-
-                    if (request.HttpMethod == "GET")
-                        requestData.Type = RequestType.GetFile;
-                    if (request.HttpMethod == "POST")
-                    {
-                        requestData.Type = RequestType.PutFile;
-                        using (var memstream = new MemoryStream())
-                        {
-                            memstream.Flush();
-                            memstream.Position = 0;
-                            request.InputStream.CopyTo(memstream);
-                            requestData.FileData = memstream.ToArray();
-                        }
-                     }
-                }
-                else
-                {
-                    requestData.Id = rawId;
-
-                    if (request.HttpMethod == "GET")
-                    {
-                        requestData.Type = RequestType.CheckFileInfo;
-                    }
-                    else if (request.HttpMethod == "POST")
-                    {
-                        
-                        string wopiOverride = request.Headers[WopiHeaders.RequestType];
-
-                        switch (wopiOverride)
-                        {
-                            case "PUT_RELATIVE":
-                                requestData.Type = RequestType.PutRelativeFile;
-                                if (request.Headers[WopiHeaders.RelativeTarget] != null) 
-                                    requestData.RelativeTarget = request.Headers[WopiHeaders.RelativeTarget];
-                                if (request.Headers[WopiHeaders.SuggestedTarget] != null) 
-                                    requestData.SuggestedTarget = request.Headers[WopiHeaders.SuggestedTarget];
-                                if (request.Headers[WopiHeaders.OverwriteRelativeTarget] != null)
-                                    requestData.OverwriteTarget = bool.Parse(request.Headers[WopiHeaders.OverwriteRelativeTarget]);
-
-                                using (var memstream = new MemoryStream())
-                                {
-                                    memstream.Flush();
-                                    memstream.Position = 0;
-                                    request.InputStream.CopyTo(memstream);
-                                    requestData.FileData = memstream.ToArray();
-                                }
-
-                                break;
-                            case "LOCK":
-                                if (request.Headers[WopiHeaders.OldLock] != null)
-                                    requestData.Type = RequestType.UnlockAndRelock;
-                                else
-                                    requestData.Type = RequestType.Lock;
-                                break;
-                            case "UNLOCK":
-                                requestData.Type = RequestType.Unlock;
-                                break;
-                            case "REFRESH_LOCK":
-                                requestData.Type = RequestType.RefreshLock;
-                                break;
-                            case "COBALT":
-                                requestData.Type = RequestType.ExecuteCobaltRequest;
-                                break;
-                            case "DELETE":
-                                requestData.Type = RequestType.DeleteFile;
-                                break;
-                            case "READ_SECURE_STORE":
-                                requestData.Type = RequestType.ReadSecureStore;
-                                break;
-                            case "GET_RESTRICTED_LINK":
-                                requestData.Type = RequestType.GetRestrictedLink;
-                                break;
-                            case "REVOKE_RESTRICTED_LINK":
-                                requestData.Type = RequestType.RevokeRestrictedLink;
-                                break;
-                            case "GET_LOCK":
-                                requestData.Type = RequestType.GetLock;
-                                break;
-                        }
-                    }
-                }
-            }
-            else if (wopiPath.StartsWith(FoldersRequestPath))
-            {
-                string rawId = wopiPath.Substring(FoldersRequestPath.Length);
-
-                if (rawId.EndsWith(ChildrenRequestPath))
-                {
-                    requestData.Id = rawId.Substring(0, rawId.Length - ChildrenRequestPath.Length);
-                    requestData.Type = RequestType.EnumerateChildren;
-                }
-                else
-                {
-                    requestData.Id = rawId;
-                    requestData.Type = RequestType.CheckFolderInfo;
-                }
-            }
-            else
-            {
-                requestData.Type = RequestType.None;
-            }
-            return requestData;
-        }
+        
 
     }
 }

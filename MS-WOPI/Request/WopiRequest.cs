@@ -56,19 +56,21 @@ namespace MS_WOPI.Request
 
         public string Id { get; set; }
 
+        public byte[] FileData { get; set; }
+
+        public string LockId { get; set; }
+
+        public string OldLockId { get; set; }
+
+        public string RelativeTarget { get; set; }
+
+        public string SuggestedTarget { get; set; }
+
+        public bool OverwriteTarget { get; set; }
+
         public string FullPath
         {
             get { return Path.Combine(WopiHandler.LocalStoragePath, Id); }
         }
-
-        public byte[] FileData { get; set; }
-
-        public string LockId { get; set; }
-        public string OldLockId { get; set; }
-        public string RelativeTarget { get; set; }
-        public string SuggestedTarget { get; set; }
-        public bool OverwriteTarget { get; set; }
-        
-
     }
-    }
+}

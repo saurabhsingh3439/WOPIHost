@@ -17,7 +17,6 @@ namespace MS_WOPI.Headers
         public const string SuggestedTarget = "X-WOPI-SuggestedTarget";
         public const string RelativeTarget = "X-WOPI-RelativeTarget";
         public const string OverwriteRelativeTarget = "X-WOPI-OverwriteRelativeTarget";
-
         public const string ValidRelativeTarget = "X-WOPI-ValidRelativeTarget";
     }
 

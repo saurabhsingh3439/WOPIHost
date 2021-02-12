@@ -467,7 +467,7 @@ namespace NUnitTestWOPI
             request.AddHeader("X-WOPI-Lock", "abcd");
             request.AddHeader("X-WOPI-Editors", "Test");
             var byts = File.ReadAllBytes(@"c:\WopiStorage\CorrectPath2.txt");
-            request.AddParameter("application/json", byts);
+            request.AddParameter("application/json", byts, ParameterType.RequestBody);
             IRestResponse response = client.Execute(request);
             Assert.AreEqual(expectedValue, response.StatusCode.ToString());
 
@@ -488,7 +488,7 @@ namespace NUnitTestWOPI
             request.AddHeader("X-WOPI-Lock", "abcd");
             request.AddHeader("X-WOPI-Editors", "Test");
             var byts = File.ReadAllBytes(@"c:\WopiStorage\CorrectPath.txt");
-            request.AddParameter("application/json", byts);
+            request.AddParameter("application/json", byts, ParameterType.RequestBody);
             IRestResponse response = client.Execute(request);
             Assert.AreEqual(expectedValue, response.StatusCode.ToString());
 
@@ -511,7 +511,7 @@ namespace NUnitTestWOPI
             request.AddHeader("X-WOPI-Override", "PUT_RELATIVE");
             request.AddHeader("X-WOPI-SuggestedTarget", "ab<c.txt");
             var byts = File.ReadAllBytes(@"c:\WopiStorage\CorrectPath.txt");
-            request.AddParameter("application/json", byts);
+            request.AddParameter("application/json", byts, ParameterType.RequestBody);
             var response = client.Execute(request);
             Assert.AreEqual(expectedValue, response.StatusCode.ToString());
         }

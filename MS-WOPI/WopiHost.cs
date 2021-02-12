@@ -14,12 +14,11 @@ namespace MS_WOPI
 {
     public class WopiHost
     {
+        private const int MaximumRequestCount = 50; //to be read from config file
         private HttpListener m_listener;
         private WopiUserRequest _userRequest;
         private int m_port = 8080;
         private WopiHandler _handler;
-
-        private const int MaximumRequestCount = 50; //to be read from config file
 
         //this class will be called from the application
         public WopiHost(WopiUserRequest wopiUser)

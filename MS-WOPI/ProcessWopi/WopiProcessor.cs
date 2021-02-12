@@ -24,6 +24,15 @@ namespace MS_WOPI.ProcessWopi
             _errorHandler = errorHandler;
             _response = response;
         }
+
+        private static string MakeValidFileName(string name)
+        {
+            string invalidChars = System.Text.RegularExpressions.Regex.Escape(new string(System.IO.Path.GetInvalidFileNameChars()));
+            string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
+
+            return System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
+        }
+
         public void HandleCheckFileInfoRequest(WopiRequest requestData)
         {
             lock (this)
@@ -174,7 +183,6 @@ namespace MS_WOPI.ProcessWopi
                     _response.Close();
                     return;
                 }
-
 
                 try
                 {
@@ -466,7 +474,6 @@ namespace MS_WOPI.ProcessWopi
                             _response.Close();
                             return;
                         }
-
                         filePath = Path.Combine(WopiHandler.LocalStoragePath, fileName);
 
                         //if file already exist
@@ -504,13 +511,11 @@ namespace MS_WOPI.ProcessWopi
                                     return;
                                 }
                             }
-
                         }
                     }
                     else
                     {
                         // Suggested mode...might just be an extension
-
                         fileName = requestData.SuggestedTarget;
 
                         if (fileName.IndexOf('.') == 0)
@@ -534,13 +539,10 @@ namespace MS_WOPI.ProcessWopi
 
                                     fileName = filenamewithoutext + i.ToString() + Path.GetExtension(filePath);
                                 }
-
-
                                 filePath = WopiHandler.LocalStoragePath + fileName;
                             }
                         }
                     }
-
                     try
                     {
                         File.WriteAllBytes(filePath, requestData.FileData);
@@ -561,16 +563,13 @@ namespace MS_WOPI.ProcessWopi
                         _response.ContentLength64 = jsonResponse.Length;
                         _response.OutputStream.Write(jsonResponse, 0, jsonResponse.Length);
                         _response.StatusCode = (int)HttpStatusCode.OK;
-
                     }
                     catch (IOException)
                     {
                         _errorHandler.ReturnServerError(_response);
-
                     }
                     _response.Close();
                 }
-
             }
         }
 
@@ -613,14 +612,6 @@ namespace MS_WOPI.ProcessWopi
                 }
                 _response.Close();
             }
-        }
-
-        private static string MakeValidFileName(string name)
-        {
-            string invalidChars = System.Text.RegularExpressions.Regex.Escape(new string(System.IO.Path.GetInvalidFileNameChars()));
-            string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
-
-            return System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
         }
     }
 }
