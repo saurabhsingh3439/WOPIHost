@@ -16,10 +16,13 @@ namespace MS_WOPI.Common
     public class LockInfo
     {
         public string Lock { get; set; }
+
         public DateTime DateCreated { get; set; }
+
         public bool Expired { get { return this.DateCreated.AddMinutes(30) < DateTime.UtcNow; } }
 
         public static readonly Dictionary<string, LockInfo> Locks = new Dictionary<string, LockInfo>();
+
         public static bool TryGetLock(string fileId, out LockInfo lockInfo)
         {
             if (Locks.TryGetValue(fileId, out lockInfo))
@@ -29,6 +32,7 @@ namespace MS_WOPI.Common
                     Locks.Remove(fileId);
                     return false;
                 }
+                
                 return true;
             }
 

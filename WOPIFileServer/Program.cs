@@ -28,6 +28,7 @@ namespace WOPIFileServer
                 Action = ActionType.VIEW,
                 docsPath = @"C:\\wopi-docs"
             };
+            
             WopiHost host = new WopiHost(request);
             host.Start();
             Console.WriteLine("A simple wopi webserver. Press any key to quit.");

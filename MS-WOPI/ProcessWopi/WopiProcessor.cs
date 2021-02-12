@@ -27,12 +27,14 @@ namespace MS_WOPI.ProcessWopi
         private IAuthorization _authorization;
         private IErrorHandler _errorHandler;
         private HttpListenerResponse _response;
+
         public WopiProcessor(IAuthorization authorization, IErrorHandler errorHandler, HttpListenerResponse response)
         {
             _authorization = authorization;
             _errorHandler = errorHandler;
             _response = response;
         }
+
         public void HandleCheckFileInfoRequest(WopiRequest requestData)
         {
             lock (this)
@@ -56,6 +58,7 @@ namespace MS_WOPI.ProcessWopi
                 {
                     FileInfo fileInfo = new FileInfo(requestData.FullPath);
                     ResponseGenerator generator = new ResponseGenerator(fileInfo);
+
                     if (!fileInfo.Exists)
                     {
                         _errorHandler.ReturnFileUnknown(_response);
@@ -64,9 +67,11 @@ namespace MS_WOPI.ProcessWopi
 
                     var memoryStream = new MemoryStream();
                     var json = new DataContractJsonSerializer(typeof(WopiCheckFileInfo));
+
                     json.WriteObject(memoryStream, generator.GetFileInfoResponse());
                     memoryStream.Flush();
                     memoryStream.Position = 0;
+
                     StreamReader streamReader = new StreamReader(memoryStream);
                     var jsonResponse = Encoding.UTF8.GetBytes(streamReader.ReadToEnd());
 
@@ -108,6 +113,7 @@ namespace MS_WOPI.ProcessWopi
                 {
                     FileInfo fileInfo = new FileInfo(requestData.FullPath);
                     ResponseGenerator generator = new ResponseGenerator(fileInfo);
+                    
                     var content = generator.GetFileContent();
                     _response.ContentType = @"application/x-binary";
                     _response.ContentLength64 = content.Length;
@@ -152,6 +158,7 @@ namespace MS_WOPI.ProcessWopi
                     _response.Close();
                     return;
                 }
+                
                 string newLock = requestData.LockId;
                 LockInfo existingLock;
                 bool hasExistingLock;
@@ -237,7 +244,6 @@ namespace MS_WOPI.ProcessWopi
                     bool fLocked = LockInfo.TryGetLock(requestData.Id, out existingLock);
                     if (fLocked && existingLock.Lock != newLock)
                     {
-
                         _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
                         _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
                         _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
@@ -246,7 +252,6 @@ namespace MS_WOPI.ProcessWopi
                     }
                     else
                     {
-
                         if (fLocked)
                             LockInfo.Locks.Remove(requestData.Id);
 
@@ -309,7 +314,6 @@ namespace MS_WOPI.ProcessWopi
                         _response.AddHeader(WopiHeaders.Lock, newLock);
                         _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
-
                     }
                 }
                 _response.Close();
@@ -363,7 +367,6 @@ namespace MS_WOPI.ProcessWopi
                         _response.AddHeader(WopiHeaders.Lock, newLock);
                         _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
-
                     }
                 }
                 _response.Close();
@@ -513,7 +516,6 @@ namespace MS_WOPI.ProcessWopi
                                     return;
                                 }
                             }
-
                         }
                     }
                     else
@@ -544,7 +546,6 @@ namespace MS_WOPI.ProcessWopi
                                     fileName = filenamewithoutext + i.ToString() + Path.GetExtension(filePath);
                                 }
 
-
                                 filePath = WopiHandler.LocalStoragePath + fileName;
                             }
                         }
@@ -555,27 +556,29 @@ namespace MS_WOPI.ProcessWopi
                         File.WriteAllBytes(filePath, requestData.FileData);
                         _response.ContentType = @"application / json";
                         string fileurl = String.Format(@"http://localhost:8080/wopi/files/{0}?access_token={1}", fileName, requestData.AccessToken);
+                        
                         PutRelativeFileResponse putRelative = new PutRelativeFileResponse
                         {
                             Name = fileName,
                             Url = fileurl
                         };
+
                         DataContractJsonSerializer js = new DataContractJsonSerializer(typeof(PutRelativeFileResponse));
                         MemoryStream msObj = new MemoryStream();
                         js.WriteObject(msObj, putRelative);
                         msObj.Position = 0;
+                        
                         StreamReader sr = new StreamReader(msObj);
                         string json = sr.ReadToEnd();
                         var jsonResponse = Encoding.ASCII.GetBytes(json);
+                        
                         _response.ContentLength64 = jsonResponse.Length;
                         _response.OutputStream.Write(jsonResponse, 0, jsonResponse.Length);
                         _response.StatusCode = (int)HttpStatusCode.OK;
-
                     }
                     catch (IOException)
                     {
                         _errorHandler.ReturnServerError(_response);
-
                     }
                     _response.Close();
                 }

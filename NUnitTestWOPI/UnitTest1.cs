@@ -41,6 +41,7 @@ namespace NUnitTestWOPI
         public void Test_Lock_ReturnSuccess()
         {
             string expectedValue = "OK";
+
             SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
             var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
             var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
@@ -351,6 +352,7 @@ namespace NUnitTestWOPI
         public void Test_GetFileInfo_ReturnUnAuthorized()
         {
             string expectedValue = "Unauthorized";
+            
             var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt");
             client.Timeout = -1;
             var request = new RestRequest(Method.GET);

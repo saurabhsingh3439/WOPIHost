@@ -26,6 +26,7 @@ namespace MS_WOPI.Handlers
         {
             _statusValidator = new StatusValidator();
         }
+        
         public void ReturnSuccess(HttpListenerResponse response)
         {
             _statusValidator.ReturnStatus(response, 200, "Success");

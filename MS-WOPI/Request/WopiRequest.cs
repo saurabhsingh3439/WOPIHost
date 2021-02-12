@@ -73,11 +73,15 @@ namespace MS_WOPI.Request
         public byte[] FileData { get; set; }
 
         public string LockId { get; set; }
+
         public string OldLockId { get; set; }
+
         public string RelativeTarget { get; set; }
+
         public string SuggestedTarget { get; set; }
+
         public bool OverwriteTarget { get; set; }
         
+    }
 
-    }
-    }
+}

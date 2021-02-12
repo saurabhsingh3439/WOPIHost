@@ -43,22 +43,24 @@ namespace MS_WOPI.Handlers
          {
             if (_key is null)
             {
-                    var key = Encoding.ASCII.GetBytes("secretKeysecretKeysecretKey123");   // + new Random(DateTime.Now.Millisecond).Next(1,999));
+               var key = Encoding.ASCII.GetBytes("secretKeysecretKeysecretKey123");   // + new Random(DateTime.Now.Millisecond).Next(1,999));
                _key = new SymmetricSecurityKey(key);
             }
 
             return _key;
          }
       }
+
       public SecurityToken GenerateAccessToken(string userId, string resourceId)
       {
          var tokenDescriptor = new SecurityTokenDescriptor
          {
             Subject = new ClaimsIdentity(new[]
-                    {
+                  {
                         new Claim(ClaimTypes.Name, userId),
                         new Claim("docid", resourceId)
-                }),
+                  }),
+
             Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(Key, SecurityAlgorithms.HmacSha256)
          };
@@ -69,6 +71,7 @@ namespace MS_WOPI.Handlers
       public string GetWopiUrl(string wopiSource,string accessToken = null)
       {
          accessToken = Uri.EscapeDataString(accessToken);
+
          return $"{BaseURL}?WOPISrc={wopiSource}&access_token={accessToken}";
       }
   
@@ -86,7 +89,7 @@ namespace MS_WOPI.Handlers
                 IssuerSigningKey = Key
             };
 
-            try
+         try
          {
             SecurityToken token = null;
             var principal = tokenHandler.ValidateToken(tokenString, tokenValidation, out token);
@@ -96,6 +99,8 @@ namespace MS_WOPI.Handlers
          {
             return false;
          }
+
       }
+
    }
 }

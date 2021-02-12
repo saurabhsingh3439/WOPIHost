@@ -17,10 +17,12 @@ namespace MS_WOPI.Response.ResponseGenerator
     public class ResponseGenerator
     {
         private FileInfo _info;
+
         public ResponseGenerator(FileInfo info)
         {
             _info = info;
         }
+        
         public WopiCheckFileInfo GetFileInfoResponse()
         {
             WopiCheckFileInfo cfi = new WopiCheckFileInfo();

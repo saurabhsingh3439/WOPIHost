@@ -43,9 +43,6 @@ namespace MS_WOPI.Handlers
         }
 
         private static readonly Dictionary<string, LockInfo> Locks = new Dictionary<string, LockInfo>();
-
-        
-
         
         public void ProcessRequest(IAsyncResult result)
         {
@@ -57,10 +54,12 @@ namespace MS_WOPI.Handlers
         {
             HttpListener listener = (HttpListener)result.AsyncState;
             HttpListenerContext context = listener.EndGetContext(result);
+
             if (!_authorization.ValidateWopiProofKey(context.Request))
             {
                _errHandler.ReturnServerError(context.Response);
             }
+
             _processor = new WopiProcessor(_authorization, _errHandler, context.Response);
             
             WopiRequest requestData = ParseRequest(context.Request);
@@ -95,12 +94,15 @@ namespace MS_WOPI.Handlers
                 case RequestType.PutFile:
                     _processor.HandlePutFileRequest(requestData);
                     break;
+
                 case RequestType.PutRelativeFile:
                     _processor.HandlePutRelativeFileRequest(requestData);
                     break;
+
                 case RequestType.GetLock:
                     _processor.GetFileLockId(requestData);
                     break;
+
                 case RequestType.EnumerateChildren:
                 case RequestType.CheckFolderInfo:
                 case RequestType.DeleteFile:
@@ -187,33 +189,42 @@ namespace MS_WOPI.Handlers
                                 }
 
                                 break;
+
                             case "LOCK":
                                 if (request.Headers[WopiHeaders.OldLock] != null)
                                     requestData.Type = RequestType.UnlockAndRelock;
                                 else
                                     requestData.Type = RequestType.Lock;
                                 break;
+
                             case "UNLOCK":
                                 requestData.Type = RequestType.Unlock;
                                 break;
+
                             case "REFRESH_LOCK":
                                 requestData.Type = RequestType.RefreshLock;
                                 break;
+
                             case "COBALT":
                                 requestData.Type = RequestType.ExecuteCobaltRequest;
                                 break;
+
                             case "DELETE":
                                 requestData.Type = RequestType.DeleteFile;
                                 break;
+
                             case "READ_SECURE_STORE":
                                 requestData.Type = RequestType.ReadSecureStore;
                                 break;
+
                             case "GET_RESTRICTED_LINK":
                                 requestData.Type = RequestType.GetRestrictedLink;
                                 break;
+
                             case "REVOKE_RESTRICTED_LINK":
                                 requestData.Type = RequestType.RevokeRestrictedLink;
                                 break;
+
                             case "GET_LOCK":
                                 requestData.Type = RequestType.GetLock;
                                 break;
@@ -240,8 +251,8 @@ namespace MS_WOPI.Handlers
             {
                 requestData.Type = RequestType.None;
             }
+            
             return requestData;
         }
-
     }
 }
