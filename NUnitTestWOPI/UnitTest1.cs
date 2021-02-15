@@ -1,3 +1,12 @@
+/*
+Copyright Mitratech Holdings Inc, 2021
+This software is provided under the terms of a License Agreement and may
+only be used and/or copied in accordance with the terms of such agreement.
+Neither this software nor any copy thereof may be provided or otherwise
+made available to any other person. No title or ownership of this software
+is hereby transferred.
+*/
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using MS_WOPI.Interfaces;
@@ -32,6 +41,7 @@ namespace NUnitTestWOPI
         public void Test_Lock_ReturnSuccess()
         {
             string expectedValue = "OK";
+
             SecurityToken accessToken = _authorization.GenerateAccessToken("user@policyhub", "CorrectPath.txt");
             var strToken = ((JwtSecurityToken)accessToken).RawData.ToString();
             var url = "http://localhost:8080/wopi/files/CorrectPath.txt?access_token=";
@@ -342,6 +352,7 @@ namespace NUnitTestWOPI
         public void Test_GetFileInfo_ReturnUnAuthorized()
         {
             string expectedValue = "Unauthorized";
+            
             var client = new RestClient("http://localhost:8080/wopi/files/CorrectPath.txt");
             client.Timeout = -1;
             var request = new RestRequest(Method.GET);
