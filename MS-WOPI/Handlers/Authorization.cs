@@ -27,6 +27,20 @@ namespace MS_WOPI.Handlers
       private readonly JwtSecurityTokenHandler _tokenHandler = new JwtSecurityTokenHandler();
       private SymmetricSecurityKey _key = null;
 
+      private SymmetricSecurityKey Key
+      {
+        get
+        {
+            if (_key is null)
+            {
+                var key = Encoding.ASCII.GetBytes("secretKeysecretKeysecretKey123");   // + new Random(DateTime.Now.Millisecond).Next(1,999));
+                _key = new SymmetricSecurityKey(key);
+            }
+
+            return _key;
+        }
+      }
+        
       public bool ValidateWopiProofKey(HttpListenerRequest request)
       {
          return true;

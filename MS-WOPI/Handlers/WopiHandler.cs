@@ -30,6 +30,8 @@ namespace MS_WOPI.Handlers
         private const string ChildrenRequestPath = @"/children";
         public static string LocalStoragePath = @"c:\WopiStorage\";
 
+        private static readonly Dictionary<string, LockInfo> Locks = new Dictionary<string, LockInfo>(); 
+        
         private IErrorHandler _errHandler;
         private IAuthorization _authorization;
         private IWopiProcessor _processor;
@@ -41,7 +43,7 @@ namespace MS_WOPI.Handlers
             _errHandler = new ErrorHandler();
             _authorization = new Authorization();
         }
-
+        
         private static readonly Dictionary<string, LockInfo> Locks = new Dictionary<string, LockInfo>();
         
         public void ProcessRequest(IAsyncResult result)
@@ -118,7 +120,7 @@ namespace MS_WOPI.Handlers
                     break;
             }
         }
-
+        
         private static WopiRequest ParseRequest(HttpListenerRequest request)
         {
             WopiRequest requestData = new WopiRequest()
@@ -154,7 +156,7 @@ namespace MS_WOPI.Handlers
                             request.InputStream.CopyTo(memstream);
                             requestData.FileData = memstream.ToArray();
                         }
-                     }
+                    }
                 }
                 else
                 {
@@ -166,16 +168,16 @@ namespace MS_WOPI.Handlers
                     }
                     else if (request.HttpMethod == "POST")
                     {
-                        
+
                         string wopiOverride = request.Headers[WopiHeaders.RequestType];
 
                         switch (wopiOverride)
                         {
                             case "PUT_RELATIVE":
                                 requestData.Type = RequestType.PutRelativeFile;
-                                if (request.Headers[WopiHeaders.RelativeTarget] != null) 
+                                if (request.Headers[WopiHeaders.RelativeTarget] != null)
                                     requestData.RelativeTarget = request.Headers[WopiHeaders.RelativeTarget];
-                                if (request.Headers[WopiHeaders.SuggestedTarget] != null) 
+                                if (request.Headers[WopiHeaders.SuggestedTarget] != null)
                                     requestData.SuggestedTarget = request.Headers[WopiHeaders.SuggestedTarget];
                                 if (request.Headers[WopiHeaders.OverwriteRelativeTarget] != null)
                                     requestData.OverwriteTarget = bool.Parse(request.Headers[WopiHeaders.OverwriteRelativeTarget]);
@@ -254,5 +256,6 @@ namespace MS_WOPI.Handlers
             
             return requestData;
         }
+
     }
 }
