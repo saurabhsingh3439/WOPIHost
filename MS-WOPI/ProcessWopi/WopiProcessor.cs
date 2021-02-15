@@ -10,6 +10,7 @@ using System.Net;
 using MS_WOPI.Response.ResponseGenerator;
 using System.Runtime.Serialization.Json;
 using MS_WOPI.Handlers;
+using System.Configuration;
 
 namespace MS_WOPI.ProcessWopi
 {
@@ -29,7 +30,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                if (!_authorization.ValidateToken(requestData.AccessToken, ConfigurationManager.AppSettings["userId"], requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -61,7 +62,7 @@ namespace MS_WOPI.ProcessWopi
                     StreamReader streamReader = new StreamReader(memoryStream);
                     var jsonResponse = Encoding.UTF8.GetBytes(streamReader.ReadToEnd());
 
-                    _response.ContentType = @"application/json";
+                    _response.ContentType = ConfigurationManager.AppSettings["appJson"];
                     _response.ContentLength64 = jsonResponse.Length;
                     _response.OutputStream.Write(jsonResponse, 0, jsonResponse.Length);
                     _errorHandler.ReturnSuccess(_response);
@@ -82,7 +83,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                if (!_authorization.ValidateToken(requestData.AccessToken, ConfigurationManager.AppSettings["userId"], requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -100,7 +101,7 @@ namespace MS_WOPI.ProcessWopi
                     FileInfo fileInfo = new FileInfo(requestData.FullPath);
                     ResponseGenerator generator = new ResponseGenerator(fileInfo);
                     var content = generator.GetFileContent();
-                    _response.ContentType = @"application/x-binary";
+                    _response.ContentType = ConfigurationManager.AppSettings["appXbinary"];
                     _response.ContentLength64 = content.Length;
                     _response.OutputStream.Write(content, 0, content.Length);
                     _errorHandler.ReturnSuccess(_response);
@@ -121,7 +122,7 @@ namespace MS_WOPI.ProcessWopi
         public static string GetFileVersion(string filename)
         {
             FileInfo fileInfo = new FileInfo(filename);
-            return fileInfo.LastWriteTimeUtc.ToString("O" /* ISO 8601 DateTime format string */); // Using the file write time is an arbitrary choice.
+            return fileInfo.LastWriteTimeUtc.ToString(ConfigurationManager.AppSettings["ISO8601DateTimeFormat"] /* ISO 8601 DateTime format string */); // Using the file write time is an arbitrary choice.
         }
 
 
@@ -130,7 +131,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                if (!_authorization.ValidateToken(requestData.AccessToken, ConfigurationManager.AppSettings["userId"], requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -157,7 +158,7 @@ namespace MS_WOPI.ProcessWopi
                     // lock mismatch/locked by another interface
                     _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
                     _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                    _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                    _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["lockMismatch"]);
                     _response.StatusCode = (int)HttpStatusCode.Conflict;
                     _response.Close();
                     return;
@@ -168,9 +169,9 @@ namespace MS_WOPI.ProcessWopi
                 if (!hasExistingLock && putTargetFileInfo.Length != 0)
                 {
                     _response.AddHeader(WopiHeaders.Lock, newLock);
-                    _response.AddHeader(WopiHeaders.LockFailureReason, "PutFile on unlocked file with current size != 0");
+                    _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["unlockedWithSizeNotZero"]);
                     _response.StatusCode = (int)HttpStatusCode.Conflict;
-                    _errorHandler.ReturnLockMismatch(_response, reason: "PutFile on unlocked file with current size != 0");
+                    _errorHandler.ReturnLockMismatch(_response, reason: ConfigurationManager.AppSettings["unlockedWithSizeNotZero"]);
                     _response.Close();
                     return;
                 }
@@ -182,7 +183,7 @@ namespace MS_WOPI.ProcessWopi
 
                     generator.Save(requestData.FileData);
                     _response.ContentLength64 = 0;
-                    _response.ContentType = @"text/html";
+                    _response.ContentType = ConfigurationManager.AppSettings["textHtml"];
                     _response.StatusCode = (int)HttpStatusCode.OK;
 
                 }
@@ -206,7 +207,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                if (!_authorization.ValidateToken(requestData.AccessToken, ConfigurationManager.AppSettings["userId"], requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -231,7 +232,7 @@ namespace MS_WOPI.ProcessWopi
 
                         _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
                         _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                        _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                        _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["lockMismatch"]);
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
 
                     }
@@ -257,7 +258,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                if (!_authorization.ValidateToken(requestData.AccessToken, ConfigurationManager.AppSettings["userId"], requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -290,15 +291,15 @@ namespace MS_WOPI.ProcessWopi
                         {
                             _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
                             _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                            _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                            _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["lockMismatch"]);
                             _response.StatusCode = (int)HttpStatusCode.Conflict;
                         }
                     }
                     else
                     {
-                        _errorHandler.ReturnLockMismatch(_response, reason: "File not locked");
+                        _errorHandler.ReturnLockMismatch(_response, reason: ConfigurationManager.AppSettings["notLocked"]);
                         _response.AddHeader(WopiHeaders.Lock, newLock);
-                        _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
+                        _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["notLocked"]);
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
 
                     }
@@ -312,7 +313,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                if (!_authorization.ValidateToken(requestData.AccessToken, ConfigurationManager.AppSettings["userId"], requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -344,15 +345,15 @@ namespace MS_WOPI.ProcessWopi
                         {
                             _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
                             _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                            _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                            _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["lockMismatch"]);
                             _response.StatusCode = (int)HttpStatusCode.Conflict;
                         }
                     }
                     else
                     {
-                        _errorHandler.ReturnLockMismatch(_response, reason: "File not locked");
+                        _errorHandler.ReturnLockMismatch(_response, reason: ConfigurationManager.AppSettings["notLocked"]);
                         _response.AddHeader(WopiHeaders.Lock, newLock);
-                        _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
+                        _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["notLocked"]);
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
 
                     }
@@ -367,7 +368,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                if (!_authorization.ValidateToken(requestData.AccessToken, ConfigurationManager.AppSettings["userId"], requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -400,7 +401,7 @@ namespace MS_WOPI.ProcessWopi
                         else
                         {
                             _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
-                            _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
+                            _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["lockMismatch"]);
                             _response.StatusCode = (int)HttpStatusCode.Conflict;
                             _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
                         }
@@ -408,9 +409,9 @@ namespace MS_WOPI.ProcessWopi
                     else
                     {
                         _response.AddHeader(WopiHeaders.Lock, newLock);
-                        _response.AddHeader(WopiHeaders.LockFailureReason, "File not locked");
+                        _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["notLocked"]);
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
-                        _errorHandler.ReturnLockMismatch(_response, reason: "File not locked");
+                        _errorHandler.ReturnLockMismatch(_response, reason: ConfigurationManager.AppSettings["notLocked"]);
                     }
                 }
                 _response.Close();
@@ -422,7 +423,7 @@ namespace MS_WOPI.ProcessWopi
             lock (this)
             {
                 // userId(user@polihub) will be passed from the policyHub application
-                if (!_authorization.ValidateToken(requestData.AccessToken, "user@policyhub", requestData.Id))
+                if (!_authorization.ValidateToken(requestData.AccessToken, ConfigurationManager.AppSettings["userId"], requestData.Id))
                 {
                     _errorHandler.ReturnInvalidToken(_response);
                     _response.Close();
@@ -544,8 +545,8 @@ namespace MS_WOPI.ProcessWopi
                     try
                     {
                         File.WriteAllBytes(filePath, requestData.FileData);
-                        _response.ContentType = @"application / json";
-                        string fileurl = String.Format(@"http://localhost:8080/wopi/files/{0}?access_token={1}", fileName, requestData.AccessToken);
+                        _response.ContentType = ConfigurationManager.AppSettings["appJson"];
+                        string fileurl = String.Format(ConfigurationManager.AppSettings["urlFormat"], fileName, requestData.AccessToken);
                         PutRelativeFileResponse putRelative = new PutRelativeFileResponse
                         {
                             Name = fileName,
@@ -607,7 +608,7 @@ namespace MS_WOPI.ProcessWopi
                     {
                         _errorHandler.ReturnSuccess(_response);
                         _response.AddHeader(WopiHeaders.Lock, "");
-                        _response.AddHeader(WopiHeaders.LockFailureReason, "No Lock for the fileid");
+                        _response.AddHeader(WopiHeaders.LockFailureReason, ConfigurationManager.AppSettings["notLocked"]);
                         _response.StatusCode = (int)HttpStatusCode.OK;
                     }
                 }
@@ -618,9 +619,9 @@ namespace MS_WOPI.ProcessWopi
         private static string MakeValidFileName(string name)
         {
             string invalidChars = System.Text.RegularExpressions.Regex.Escape(new string(System.IO.Path.GetInvalidFileNameChars()));
-            string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
+            string invalidRegStr = string.Format(ConfigurationManager.AppSettings["invalidRegFormat"], invalidChars);
 
-            return System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
+            return System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, ConfigurationManager.AppSettings["underscore"]);
         }
     }
 }
