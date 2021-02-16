@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MS_WOPI.Common;
+using MS_WOPI.Handlers;
+using MS_WOPI.Interfaces;
 using MS_WOPI.Request;
 using MS_WOPI.Response;
-using MS_WOPI.Interfaces;
-using System.IO;
-using MS_WOPI.Common;
-using System.Net;
 using MS_WOPI.Response.ResponseGenerator;
+using System;
+using System.IO;
+using System.Net;
 using System.Runtime.Serialization.Json;
-using MS_WOPI.Handlers;
+using System.Text;
 
 namespace MS_WOPI.ProcessWopi
 {
@@ -144,19 +143,19 @@ namespace MS_WOPI.ProcessWopi
                     return;
                 }
                 string newLock = requestData.LockId;
-                LockInfo existingLock;
+                string existingLock;
                 bool hasExistingLock;
 
-                lock (LockInfo.Locks)
+                lock (this)
                 {
                     hasExistingLock = LockInfo.TryGetLock(requestData.Id, out existingLock);
                 }
 
-                if (hasExistingLock && existingLock.Lock != newLock)
+                if (hasExistingLock && existingLock != newLock)
                 {
                     // lock mismatch/locked by another interface
-                    _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
-                    _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                    _errorHandler.ReturnLockMismatch(_response, existingLock);
+                    _response.AddHeader(WopiHeaders.Lock, existingLock);
                     _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
                     _response.StatusCode = (int)HttpStatusCode.Conflict;
                     _response.Close();
@@ -222,15 +221,15 @@ namespace MS_WOPI.ProcessWopi
 
                 string newLock = requestData.LockId;
 
-                lock (LockInfo.Locks)
+                lock (this)
                 {
-                    LockInfo existingLock;
+                    string existingLock;
                     bool fLocked = LockInfo.TryGetLock(requestData.Id, out existingLock);
-                    if (fLocked && existingLock.Lock != newLock)
+                    if (fLocked && existingLock != newLock)
                     {
 
-                        _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
-                        _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                        _errorHandler.ReturnLockMismatch(_response, existingLock);
+                        _response.AddHeader(WopiHeaders.Lock, existingLock);
                         _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
                         _response.StatusCode = (int)HttpStatusCode.Conflict;
 
@@ -239,9 +238,10 @@ namespace MS_WOPI.ProcessWopi
                     {
 
                         if (fLocked)
-                            LockInfo.Locks.Remove(requestData.Id);
+                            LockInfo.Remove(requestData.Id);
 
-                        LockInfo.Locks[requestData.Id] = new LockInfo() { DateCreated = DateTime.UtcNow, Lock = newLock };
+                        //LockInfo.Locks[requestData.Id] = new LockInfo() { DateCreated = DateTime.UtcNow, Lock = newLock };
+                        LockInfo.SetLock(requestData.Id, newLock);
                         _errorHandler.ReturnSuccess(_response);
                         _response.AddHeader(WopiHeaders.Lock, newLock);
                         _response.StatusCode = (int)HttpStatusCode.OK;
@@ -272,24 +272,25 @@ namespace MS_WOPI.ProcessWopi
 
                 string newLock = requestData.LockId;
 
-                lock (LockInfo.Locks)
+                lock (this)
                 {
-                    LockInfo existingLock;
+                    string  existingLock;
                     if (LockInfo.TryGetLock(requestData.Id, out existingLock))
                     {
-                        if (existingLock.Lock == newLock)
+                        if (existingLock == newLock)
                         {
 
-                            existingLock.DateCreated = DateTime.UtcNow;
-                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            //existingLock.DateCreated = DateTime.UtcNow;
+                            LockInfo.Refresh(requestData.Id);
+                            _response.AddHeader(WopiHeaders.Lock, existingLock);
                             _response.StatusCode = (int)HttpStatusCode.OK;
                             _errorHandler.ReturnSuccess(_response);
 
                         }
                         else
                         {
-                            _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
-                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            _errorHandler.ReturnLockMismatch(_response, existingLock);
+                            _response.AddHeader(WopiHeaders.Lock, existingLock);
                             _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
                             _response.StatusCode = (int)HttpStatusCode.Conflict;
                         }
@@ -327,23 +328,23 @@ namespace MS_WOPI.ProcessWopi
 
                 string newLock = requestData.LockId;
 
-                lock (LockInfo.Locks)
+                lock (this)
                 {
-                    LockInfo existingLock;
+                    string  existingLock;
                     if (LockInfo.TryGetLock(requestData.Id, out existingLock))
                     {
-                        if (existingLock.Lock == newLock)
+                        if (existingLock == newLock)
                         {
-                            LockInfo.Locks.Remove(requestData.Id);
+                            LockInfo.Remove(requestData.Id);
                             _errorHandler.ReturnSuccess(_response);
-                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            _response.AddHeader(WopiHeaders.Lock, existingLock);
                             _response.StatusCode = (int)HttpStatusCode.OK;
 
                         }
                         else
                         {
-                            _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
-                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            _errorHandler.ReturnLockMismatch(_response, existingLock);
+                            _response.AddHeader(WopiHeaders.Lock, existingLock);
                             _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
                             _response.StatusCode = (int)HttpStatusCode.Conflict;
                         }
@@ -384,25 +385,26 @@ namespace MS_WOPI.ProcessWopi
                 string newLock = requestData.LockId;
                 string oldLock = requestData.OldLockId;
 
-                lock (LockInfo.Locks)
+                lock (this)
                 {
-                    LockInfo existingLock;
+                    string  existingLock;
                     if (LockInfo.TryGetLock(requestData.Id, out existingLock))
                     {
-                        if (existingLock.Lock == oldLock)
+                        if (existingLock == oldLock)
                         {
 
-                            LockInfo.Locks[requestData.Id] = new LockInfo() { DateCreated = DateTime.UtcNow, Lock = newLock };
+                            //LockInfo.Locks[requestData.Id] = new LockInfo() { DateCreated = DateTime.UtcNow, Lock = newLock };
+                            LockInfo.SetLock(requestData.Id,newLock);
                             _response.AddHeader(WopiHeaders.Lock, newLock);
                             _response.StatusCode = (int)HttpStatusCode.OK;
                             _errorHandler.ReturnSuccess(_response);
                         }
                         else
                         {
-                            _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                            _response.AddHeader(WopiHeaders.Lock, existingLock);
                             _response.AddHeader(WopiHeaders.LockFailureReason, "Lock mismatch/Locked by another interface");
                             _response.StatusCode = (int)HttpStatusCode.Conflict;
-                            _errorHandler.ReturnLockMismatch(_response, existingLock.Lock);
+                            _errorHandler.ReturnLockMismatch(_response, existingLock);
                         }
                     }
                     else
@@ -489,16 +491,16 @@ namespace MS_WOPI.ProcessWopi
                             }
                             else
                             {
-                                LockInfo existingLock;
+                                string existingLock;
                                 bool hasExistingLock;
 
-                                lock (LockInfo.Locks)
+                                lock (this)
                                 {
                                     hasExistingLock = LockInfo.TryGetLock(requestData.Id, out existingLock);
                                 }
                                 if (hasExistingLock)
                                 {
-                                    _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                                    _response.AddHeader(WopiHeaders.Lock, existingLock);
                                     _errorHandler.ReturnConflict(_response);
                                     _response.Close();
                                     return;
@@ -593,14 +595,14 @@ namespace MS_WOPI.ProcessWopi
                     return;
                 }
 
-                lock (LockInfo.Locks)
+                lock (this)
                 {
-                    LockInfo existingLock;
+                    string  existingLock;
                     bool fLocked = LockInfo.TryGetLock(requestData.Id, out existingLock);
                     if (fLocked)
                     {
                         _errorHandler.ReturnSuccess(_response);
-                        _response.AddHeader(WopiHeaders.Lock, existingLock.Lock);
+                        _response.AddHeader(WopiHeaders.Lock, existingLock);
                         _response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     else
